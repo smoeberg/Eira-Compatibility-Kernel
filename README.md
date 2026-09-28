@@ -20,4 +20,4 @@ This repository was imported from the ECK directory in a project archive. Intern
 
 ## Deployment direction
 
-The target product is a multi-tenant SaaS on Kubernetes. The architecture and security requirements are in [KUBERNETES_SAAS.md](docs/architecture/KUBERNETES_SAAS.md). Existing Docker Compose and single-server deployment guides are historical/development material, not the target production deployment. No Kubernetes production deployment is claimed for this snapshot.
+The target product is a multi-tenant SaaS on Kubernetes. A customer-side edge collector keeps raw API traffic inside the customer's network and exports only approved structural aggregates. See [KUBERNETES_SAAS.md](docs/architecture/KUBERNETES_SAAS.md) and [FINGERPRINT_DATA_FLOW.md](docs/architecture/FINGERPRINT_DATA_FLOW.md). Existing Docker Compose and single-server deployment guides are historical/development material, not the target production deployment. No Kubernetes production deployment is claimed for this snapshot.
