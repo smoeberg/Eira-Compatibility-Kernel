@@ -1,0 +1,13 @@
+# Production — see Caddyfile.hetzner-portal for v0.5 (recommended)
+
+eck.eira-systems.eu {
+	reverse_proxy bff:3001
+}
+
+api.eck.eira-systems.eu {
+	reverse_proxy api:3000
+}
+
+*.fp.eira-systems.eu {
+	reverse_proxy api:3000
+}

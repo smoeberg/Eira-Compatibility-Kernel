@@ -1,0 +1,19 @@
+# Local dev — admin vite + BFF + API
+
+eck.localhost {
+	@bff path /api/* /auth/* /health
+	handle @bff {
+		reverse_proxy host.docker.internal:3001
+	}
+	handle {
+		reverse_proxy host.docker.internal:5173
+	}
+}
+
+api.eck.localhost {
+	reverse_proxy api:3000
+}
+
+*.fp.localhost {
+	reverse_proxy api:3000
+}

@@ -1,0 +1,20 @@
+{
+  "name": "eck",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Eira Compatibility Kernel",
+  "scripts": {
+    "build": "pnpm --filter @eck/observability build && pnpm --filter @eck/bff-core build && pnpm --filter @eck/service-auth build && pnpm --filter @eck/fingerprint build && pnpm --filter @eck/capability build && pnpm --filter @eck/translation build && pnpm --filter @eck/adapters build && pnpm --filter @eck/api build && pnpm --filter @eck/bff build && pnpm --filter @eck/admin build",
+    "test": "pnpm --filter @eck/observability test && pnpm --filter @eck/bff-core test && pnpm --filter @eck/service-auth test && pnpm --filter @eck/fingerprint test && pnpm --filter @eck/capability test && pnpm --filter @eck/translation test && pnpm --filter @eck/adapters test && pnpm --filter @eck/api test",
+    "demo:score": "pnpm --filter @eck/fingerprint demo",
+    "dev:api": "pnpm --filter @eck/api dev",
+    "dev:bff": "pnpm --filter @eck/bff dev",
+    "dev:admin": "pnpm --filter @eck/admin dev",
+    "envoy:gen": "node tools/generate-envoy-config.mjs",
+    "db:migrate": "echo Run: psql $DATABASE_URL -f apps/api/drizzle/0000_init.sql && psql $DATABASE_URL -f apps/api/drizzle/0001_tenants.sql && psql $DATABASE_URL -f apps/api/drizzle/0002_report_run_unique.sql && psql $DATABASE_URL -f apps/api/drizzle/0003_audit_log.sql"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@9.15.4"
+}

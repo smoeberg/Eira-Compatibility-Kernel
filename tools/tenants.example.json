@@ -1,0 +1,8 @@
+{
+  "tenants": [
+    {
+      "slug": "hvidovre",
+      "legacy_base_url": "https://graph.microsoft.com"
+    }
+  ]
+}

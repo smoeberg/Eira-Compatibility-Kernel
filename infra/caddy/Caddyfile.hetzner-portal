@@ -1,0 +1,36 @@
+# Hetzner — portal (eck) + data (api, fp)
+
+# Portal: admin SPA + NestJS BFF
+eck.eira-systems.eu {
+	handle /api/* {
+		reverse_proxy bff:3001
+	}
+	handle /auth/* {
+		reverse_proxy bff:3001
+	}
+	handle /health {
+		reverse_proxy bff:3001
+	}
+	handle /ready {
+		reverse_proxy bff:3001
+	}
+	handle /metrics {
+		reverse_proxy bff:3001
+	}
+	handle {
+		root * /srv/admin
+		try_files {path} /index.html
+		file_server
+	}
+}
+
+# Data API — not for browser; restrict at firewall to BFF + ops
+# See infra/firewall/README.md
+api.eck.eira-systems.eu {
+	reverse_proxy api:3000
+}
+
+# Fingerprint passthrough — public (fagsystem traffic)
+*.fp.eira-systems.eu {
+	reverse_proxy api:3000
+}

@@ -1,0 +1,14 @@
+# Apache on eck.eira-systems.eu — route /api to BFF, rest to React
+
+<IfModule mod_rewrite.c>
+RewriteEngine On
+
+# Auth + API → PHP BFF (outside WordPress)
+RewriteCond %{REQUEST_URI} ^/(api|auth)/
+RewriteRule ^ /home/eira/proxy/public/index.php [L,QSA]
+
+# React SPA
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ /index.html [L]
+</IfModule>

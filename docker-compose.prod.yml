@@ -1,0 +1,98 @@
+# Production stack — Hetzner portal + data zone
+# Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+services:
+  postgres:
+    restart: unless-stopped
+    networks: [eck_data]
+    ports: !reset []
+
+  api:
+    restart: unless-stopped
+    networks: [eck_data]
+    ports: !reset []
+    expose: ["3000"]
+    environment:
+      NODE_ENV: production
+      ECK_API_BFF_ONLY: ${ECK_API_BFF_ONLY:-true}
+      ECK_REQUIRE_USER_CONTEXT: ${ECK_REQUIRE_USER_CONTEXT:-true}
+      ECK_REQUIRE_BFF_SIGNATURE: ${ECK_REQUIRE_BFF_SIGNATURE:-true}
+      ECK_FP_DOMAIN: ${ECK_FP_DOMAIN:-fp.eira-systems.eu}
+      ECK_PUBLIC_PROTOCOL: https
+      ECK_PUBLIC_DOMAIN: ${ECK_PUBLIC_DOMAIN:-eira-systems.eu}
+      ECK_ADMIN_HOST: ${ECK_ADMIN_HOST:-eck.eira-systems.eu}
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"fetch('http://127.0.0.1:3000/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\"",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  bff:
+    restart: unless-stopped
+    networks: [eck_data, eck_edge]
+    ports: !reset []
+    expose: ["3001"]
+    environment:
+      NODE_ENV: production
+      ECK_OIDC_ENABLED: ${ECK_OIDC_ENABLED:-true}
+      ECK_OIDC_TENANT_ID: ${ECK_OIDC_TENANT_ID}
+      ECK_OIDC_CLIENT_ID: ${ECK_OIDC_CLIENT_ID}
+      ECK_OIDC_CLIENT_SECRET: ${ECK_OIDC_CLIENT_SECRET}
+      ECK_OIDC_REDIRECT_URI: ${ECK_OIDC_REDIRECT_URI:-https://eck.eira-systems.eu/auth/callback}
+      ECK_OIDC_POST_LOGOUT_REDIRECT: ${ECK_OIDC_POST_LOGOUT_REDIRECT:-https://eck.eira-systems.eu/}
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"fetch('http://127.0.0.1:3001/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\"",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  admin:
+    build:
+      context: .
+      dockerfile: apps/admin/Dockerfile
+      args:
+        VITE_ECK_AUTH_MODE: proxy
+    volumes:
+      - admin_static:/export
+    command: >
+      sh -c "rm -rf /export/* && cp -r /usr/share/nginx/html/. /export/"
+    restart: "no"
+
+  caddy:
+    restart: unless-stopped
+    networks: [eck_data, eck_edge]
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infra/caddy/Caddyfile.hetzner-portal:/etc/caddy/Caddyfile:ro
+      - admin_static:/srv/admin:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+      bff:
+        condition: service_healthy
+      admin:
+        condition: service_completed_successfully
+
+networks:
+  eck_data:
+    internal: true
+  eck_edge:
+
+volumes:
+  admin_static:
+  caddy_data:
+  caddy_config:

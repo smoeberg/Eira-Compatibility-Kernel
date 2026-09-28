@@ -1,0 +1,191 @@
+:root {
+  font-family: "Segoe UI", system-ui, sans-serif;
+  line-height: 1.5;
+  color: #0f172a;
+  background: #f1f5f9;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+a {
+  color: #0369a1;
+  text-decoration: none;
+}
+
+.shell {
+  min-height: 100vh;
+}
+
+.nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  background: #0f172a;
+  color: #f8fafc;
+}
+
+.nav a.brand {
+  color: #f8fafc;
+  font-weight: 600;
+}
+
+.linkish {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  font: inherit;
+}
+
+.page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+.page.narrow {
+  max-width: 520px;
+}
+
+.card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 1.25rem;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 8%);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.gap-sm {
+  gap: 0.25rem;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+}
+
+.tenant-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+button,
+.button {
+  display: inline-block;
+  background: #0369a1;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.55rem 1rem;
+  cursor: pointer;
+  font: inherit;
+}
+
+button.secondary,
+.button.secondary {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+button.small {
+  padding: 0.35rem 0.65rem;
+  font-size: 0.875rem;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+input {
+  width: 100%;
+  padding: 0.5rem;
+  margin-top: 0.25rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font: inherit;
+}
+
+label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.mono {
+  font-family: ui-monospace, monospace;
+  font-size: 0.875rem;
+}
+
+.muted {
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.hint {
+  display: block;
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-top: 0.25rem;
+}
+
+.error {
+  color: #b91c1c;
+}
+
+.back {
+  display: inline-block;
+  margin-bottom: 1rem;
+}
+
+.setup .block,
+code.block {
+  display: block;
+  background: #f8fafc;
+  padding: 0.75rem;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  word-break: break-all;
+}
+
+.report {
+  overflow: auto;
+  font-size: 0.8rem;
+}
+
+.run-list {
+  list-style: none;
+  padding: 0;
+}
+
+.run-list li {
+  padding: 0.35rem 0;
+}
+
+.label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+}

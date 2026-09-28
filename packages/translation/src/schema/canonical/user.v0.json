@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://eck.eira-systems.eu/schema/canonical/user.v0.json",
+  "title": "CanonicalUser",
+  "description": "Platform- and backend-neutral user entity in the ECK canonical model",
+  "type": "object",
+  "required": ["id", "externalRefs", "displayName", "enabled"],
+  "properties": {
+    "id": { "type": "string", "format": "uuid" },
+    "externalRefs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["system", "id"],
+        "properties": {
+          "system": {
+            "type": "string",
+            "enum": [
+              "microsoft_graph",
+              "google_workspace",
+              "ldap",
+              "nextcloud",
+              "owncloud",
+              "open_xchange",
+              "caldav",
+              "s3",
+              "collabora",
+              "matrix"
+            ]
+          },
+          "id": { "type": "string" },
+          "path": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "displayName": { "type": "string", "minLength": 1 },
+    "mail": { "type": "string", "format": "email" },
+    "userPrincipalName": { "type": "string" },
+    "enabled": { "type": "boolean" },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "modifiedAt": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false
+}

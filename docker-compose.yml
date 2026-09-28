@@ -1,0 +1,75 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: eck
+      POSTGRES_PASSWORD: eck
+      POSTGRES_DB: eck
+    ports:
+      - "5433:5432"
+    volumes:
+      - eck_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U eck"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://eck:eck@postgres:5432/eck
+      PORT: 3000
+      ADMIN_API_KEY: ${ADMIN_API_KEY:-dev-admin-key}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-dev-internal-key}
+      ECK_SERVICE_TOKEN: ${ECK_SERVICE_TOKEN:-dev-service-token}
+      ECK_BFF_SIGNING_SECRET: ${ECK_BFF_SIGNING_SECRET:-dev-signing-secret}
+      ECK_API_BFF_ONLY: ${ECK_API_BFF_ONLY:-false}
+      ECK_FP_DOMAIN: ${ECK_FP_DOMAIN:-fp.localhost}
+      ECK_PUBLIC_PROTOCOL: http
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  bff:
+    build:
+      context: .
+      dockerfile: apps/bff/Dockerfile
+    environment:
+      PORT: 3001
+      ECK_UPSTREAM_API_URL: http://api:3000
+      ECK_SERVICE_TOKEN: ${ECK_SERVICE_TOKEN:-dev-service-token}
+      ECK_BFF_SIGNING_SECRET: ${ECK_BFF_SIGNING_SECRET:-dev-signing-secret}
+      ECK_BFF_SESSION_SECRET: ${ECK_BFF_SESSION_SECRET:-dev-session-secret}
+      ECK_OIDC_ENABLED: ${ECK_OIDC_ENABLED:-false}
+    ports:
+      - "3001:3001"
+    depends_on:
+      - api
+
+  admin:
+    build:
+      context: .
+      dockerfile: apps/admin/Dockerfile
+    ports:
+      - "8080:80"
+
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./infra/caddy/Caddyfile.dev:/etc/caddy/Caddyfile:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - api
+      - bff
+      - admin
+
+volumes:
+  eck_pg:

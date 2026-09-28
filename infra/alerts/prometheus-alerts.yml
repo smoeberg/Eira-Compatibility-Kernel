@@ -1,0 +1,56 @@
+# Prometheus alert rules for ECK (example)
+# Mount in Prometheus: rule_files: ["/etc/prometheus/eck-alerts.yml"]
+
+groups:
+  - name: eck.availability
+    rules:
+      - alert: EckBffDown
+        expr: up{job="eck-bff"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "ECK BFF is down"
+          description: "Portal gateway unreachable for 2+ minutes."
+
+      - alert: EckApiDown
+        expr: up{job="eck-api"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "ECK API is down"
+          description: "Data API unreachable for 2+ minutes."
+
+      - alert: EckApiNotReady
+        expr: eck_up{service="eck-api"} == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "ECK API readiness degraded"
+          description: "Database or dependency check failing."
+
+  - name: eck.errors
+    rules:
+      - alert: EckHigh5xxRate
+        expr: |
+          sum(rate(eck_http_requests_total{status=~"5.."}[5m]))
+          /
+          sum(rate(eck_http_requests_total[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "ECK elevated 5xx error rate"
+          description: "More than 5% of requests return 5xx over 5 minutes."
+
+      - alert: EckBffUpstreamErrors
+        expr: |
+          sum(rate(eck_http_requests_total{service="eck-bff",status=~"5.."}[5m])) > 0.1
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "BFF returning upstream errors"
+          description: "Check API health and correlationId in logs."

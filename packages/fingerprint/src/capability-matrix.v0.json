@@ -1,0 +1,57 @@
+{
+  "version": "0",
+  "routes": [
+    {
+      "pattern": "/users",
+      "methods": { "GET": "native", "POST": "native" }
+    },
+    {
+      "pattern": "/users/{id}",
+      "methods": { "GET": "native", "PATCH": "native", "DELETE": "native" }
+    },
+    {
+      "pattern": "/groups",
+      "methods": { "GET": "native", "POST": "emulated" }
+    },
+    {
+      "pattern": "/groups/{id}/members",
+      "methods": { "GET": "native", "POST": "native", "DELETE": "native" }
+    },
+    {
+      "pattern": "/drive/root/children",
+      "methods": { "GET": "native" }
+    },
+    {
+      "pattern": "/drive/items/{id}",
+      "methods": { "GET": "native", "PATCH": "emulated", "DELETE": "native" }
+    },
+    {
+      "pattern": "/drive/items/{id}/content",
+      "methods": { "GET": "native", "PUT": "native" }
+    },
+    {
+      "pattern": "/drive/items/{id}/versions",
+      "methods": { "GET": "native" }
+    },
+    {
+      "pattern": "/drive/items/{id}/lock",
+      "methods": { "POST": "emulated", "DELETE": "emulated" }
+    },
+    {
+      "pattern": "/me/events",
+      "methods": { "GET": "native", "POST": "native" }
+    },
+    {
+      "pattern": "/events/{id}",
+      "methods": { "GET": "native", "PATCH": "native", "DELETE": "native" }
+    },
+    {
+      "pattern": "/me/chats/{id}/messages",
+      "methods": { "POST": "gap" }
+    },
+    {
+      "pattern": "/notifications/webhook",
+      "methods": { "POST": "emulated" }
+    }
+  ]
+}
