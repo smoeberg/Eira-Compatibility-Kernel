@@ -1,47 +1,39 @@
 # ECK som Kubernetes-baseret SaaS
 
-**Beslutning:** ECK leveres som en multitenant SaaS på Kubernetes med en [lokal ECK Edge Collector i kundens netværk](FINGERPRINT_DATA_FLOW.md). Kun godkendte, aggregerede strukturdata sendes til SaaS. Denne beskrivelse er målbilledet; den nuværende kode og de eksisterende Compose-filer er ikke en produktionsklar Kubernetes-udrulning. Ældre vejledninger om Simply/Hetzner og enkeltserverdrift beskriver tidligere forslag.
+**Beslutning:** ECK leveres som multitenant SaaS på Kubernetes. Fingerprint i fase A bruger en [Eira-hostet pass-through-proxy uden installation hos kunden](FINGERPRINT_DATA_FLOW.md). Kommune-IT ændrer kun API-base-URL i de fagsystemer, der tillader det. Eksisterende Compose- og Simply/Hetzner-vejledninger beskriver tidligere forslag eller udvikling, ikke en produktionsklar Kubernetes-udrulning.
 
-## Produktgrænse
+## Produkt og datagrænse
 
-- **Fase A – Fingerprint:** Kommunens administrator opretter et tenant og en tidsafgrænset analyse. Et lokalt edge-collector observerer eller videresender trafik i kundens netværk og eksporterer kun aggregerede metadata. En SaaS-worker afslutter analysen og genererer en rapport.
-- **Fase B – Runtime:** Platform-API oversættes via en kanonisk model til konkret implementerede adaptere. Fase B er et separat leverancemål og må ikke tælle som understøttet i fase A's score, før det er verificeret.
-- Nogle kunder kan ændre fagsystemets API-base-URL til en lokal collector; andre må bruge en eksisterende gateway eller instrumentering. Det er en teknisk ændring hos kunden. Løsningen må ikke love, at alle fagsystemer kan observeres. SaaS' offentlige endpoint er til collector-metadata, ikke rå fagsystemtrafik.
+- **Fase A:** Fagsystem → ECK's tenant-specifikke HTTPS-proxy → oprindelig API. Rå trafik passerer ECK i hukommelsen, men kun tilladte strukturaggregater må gemmes og rapporteres. Ingen lokal ECK-agent, DNS-ændring eller generel TLS-inspektion hos kunden.
+- **Fase B:** Oversættelse via kanonisk model og konkrete adaptere er et særskilt leverancemål. En planlagt adapter må ikke regnes som testet kompatibilitet i fase A.
+- Hvis kunden kræver, at rå trafik aldrig når ECK, er en hosted pass-through-proxy ikke den rigtige metode. Det kræver eksport af rensede metadata fra en eksisterende kundegateway eller en lokal komponent.
 
 ## Logisk topologi
 
 | Del | Kubernetes-arbejdsbyrde | Adgang |
 | --- | --- | --- |
-| Offentlig gateway | Gateway API-controller og HTTPS-listeners | `eck.<domæne>` til portal; `ingest.<domæne>` til strukturbatches fra lokale collectors |
-| Portal | Admin SPA og BFF som separate Deployments | Kun BFF taler med intern API; OIDC-session for admin |
-| Fingerprint ingestion | Dedikeret ingestion Deployment og Service | Kun autentificerede, skemavaliderede aggregater; ingen rå proxy-trafik |
-| Kontrolplan | Intern API Deployment | ClusterIP; ingen offentlig API-host som standard |
-| Asynkront arbejde | Worker Deployment med kø | Afslutning, rapport, sletning og genforsøg |
-| Data | PostgreSQL og krypteret rapportlager | Privat netværk, backup og restore-test |
+| HTTPS-gateway | Gateway API-controller med wildcard TLS | `eck.<domæne>` til portal, `*.fp.<domæne>` til proxy |
+| Portal | Admin SPA og BFF som separate Deployments | OIDC og tenant-roller; BFF til intern API |
+| Fingerprint-dataplan | Dedikeret proxy Deployment og Service | Offentlig tenant-host, låst upstream-origin, rensning før lagring |
+| Kontrolplan | Intern API Deployment | Kun ClusterIP og eksplicit tilladte interne kald |
+| Asynkront arbejde | Worker Deployment og kø | Rapporter, periodestop og sletning |
+| Data | PostgreSQL og krypteret rapportlager | Tenant-afgrænset, privat adgang, backup/restore |
 
-Clusteret skal have en Gateway API-implementering, DNS/TLS-automatisering, en CNI der håndhæver NetworkPolicy, og overvågning. Kubernetes leverer ikke disse komponenter eller deres sikkerhedsregler automatisk. Vælg konkret leverandør og EU-region ved implementering.
+Clusteret skal have en Gateway API-implementering, DNS/TLS-automatisering, en CNI der håndhæver NetworkPolicy, og overvågning. Vælg konkret leverandør og EU-region ved implementering. Kubernetes leverer ikke applikationens tenant-isolation, privacy-filtre eller upstream-sikkerhed automatisk.
 
-## Tenants og sikkerhed
+## Sikkerhed og drift
 
-1. OIDC-identitet knyttes på serversiden til eksplicitte tenant-roller. Hver API-forespørgsel kontrollerer både handling og tenant; et `tenantId` eller `runId` fra klienten giver aldrig adgang alene. Databaseforespørgsler afgrænses til tenant. Afprøv isolation mellem to tenants i integrationstest.
-2. En delt applikations-namespace er acceptabel til første SaaS-version, hvis der er dokumenteret adgangskontrol og dataseparation. Namespace alene er ikke en tenant-sikkerhedsgrænse. Kunder med krav om stærkere isolation kan senere få separat database eller dedikeret installation.
-3. Kundens lokale pass-through-proxy accepterer kun en godkendt integration og et fastlåst upstream-origin. Afvis absolute og `//`-URL'er, private metadata-/clusteradresser, omdirigering til nyt origin og DNS-skift til forbudte adresser. Begræns egress via kundens kontrollerede proxy/firewall; almindelig NetworkPolicy kan ikke alene udtrykke en sikker FQDN-allowlist.
-4. Brug default-deny ingress/egress og præcise tilladelser mellem gateway, BFF, API, worker og database. Signer/valider servicekald og bind bruger, roller, tenant, metode og sti til samme verifikation. Begræns requeststørrelse, samtidighed og tidsforbrug for proxyen.
-5. Hemmeligheder leveres via en etableret secret manager/integration. Krypter Kubernetes Secrets i kontrolplanet, begræns RBAC, og læg aldrig produktionsnøgler i Git, images eller ConfigMaps. Sessioner og kø må ikke afhænge af én pods lokale hukommelse.
-6. Definer dataminimering før kundetrafik: ingen query-strenge, bodies, bearer tokens eller vilkårlige headers i eksporterede fingerprint-data. Brug allowlist over aggregerede metadata, lokal filtrering og uafhængig servervalidering. Fastlæg retention, automatisk sletning, audit, backup og restore som testbare krav.
-
-## Drift og udrulning
-
-- Versionslåste images bygges i CI og deployes med en versionsstyret Helm chart eller Kustomize-overlays. Miljøerne `dev`, `staging` og `prod` har særskilte credentials og data.
-- Deployments har readiness/liveness, ressourcegrænser, mindst to replikaer for kundevendte komponenter og kontrolleret rollout/rollback. Skalering af proxy/API baseres på observeret belastning; workers på kølængde. Databasekapacitet og upstream-rategrænser skalerer ikke automatisk med pods.
-- Database-migreringer køres som en eksplicit, idempotent release-opgave før nye pods modtager trafik. Rapporter og rådata har særskilte retention-regler. Audit, metrics og traces må ikke indeholde følsomme request-data.
-- En staging-test skal dække onboarding, tenant-isolation, en fuld fingerprint-run, rapport, sletning, restart/rollback, upstream-fejl og restoration fra backup. Ingen produktion med kommunal trafik før disse tests er grønne.
+1. Brugerens OIDC-identitet bindes serverside til tenant-roller. Hver API-forespørgsel kontrollerer handling og tenant. `tenantId` eller `runId` fra klienten giver ikke adgang alene. Delte Kubernetes namespaces er ikke en tilstrækkelig tenant-sikkerhedsgrænse.
+2. Fingerprint-proxyen accepterer kun det godkendte tenant-hostname og upstream-origin. Afvis absolute og `//`-URL'er, private metadata-/clusteradresser, redirects til nyt origin og DNS-skift til forbudte adresser. Brug kontrolleret egress og applikationsvalidering.
+3. Default-deny netværkspolitik, præcise service-adgange, ressourcegrænser, streaming, timeouts og rate limits. Maskinidentiteter og secrets roteres; ingen produktionsnøgler i Git eller image. Sessioner og kø overlever pod-restart.
+4. Ingen rå query-strenge, bodies, tokens, headers eller ID'er i fingerprint-DB, logs, traces, metrics, kø, rapporter eller backups. Gennemgå også gateway, WAF og fejlhåndtering. Definer retention, sletning og adgangsaudit.
+5. Images versionlåses i CI. Staging og produktion har særskilte data. Database-migreringer køres eksplicit før rollout. Kundevendte workloads har readiness, kontrolleret rollback og testet backup/restore.
 
 ## Leverancer i rækkefølge
 
-1. Reparer tomme manifests, moduler, services og migrationer; få `pnpm install`, build og tests grønne. Et deploy-manifest kan ikke kompensere for en app, der ikke starter.
-2. Luk proxyens destination/egress-risiko, tenant-adgangskontrol og dataminimering. Gør én fingerprint-run testbar ende til ende med syntetisk trafik.
-3. Flyt pass-through til en lokal edge-collector, byg metadata-ingestion, worker/kø og sessionlager, og opret Kubernetes-ressourcer samt staging-pipeline.
-4. Kør sikkerheds-, belastnings- og restore-test. Først derefter kan fase A piloteres som SaaS. Fase B kræver særskilt validering af hver adapter.
+1. Reparer tomme manifests, moduler, services og migrationer; få `pnpm install`, build og tests grønne.
+2. Luk proxyens destination/egress-risiko, tenant-adgangskontrol og dataminimering. Verificer ét fingerprint-run ende til ende med syntetisk trafik.
+3. Adskil proxy fra intern API, implementer worker/kø, og opret Kubernetes-ressourcer samt staging-pipeline.
+4. Kør sikkerheds-, belastnings- og restore-test. Først derefter kan fase A piloteres. Fase B valideres separat per adapter.
 
-**Acceptkriterium for fase A:** En autoriseret kommune kan starte en analyse, sende syntetiske kald via sin lokale proxy, eksportere udelukkende tilladte aggregater over HTTPS, hente en rapport og få sine data slettet efter aftalt periode; en anden kommune kan hverken læse, ændre eller påvirke dens run. Systemet skal fortsætte gennem pod-restart og dokumentere backup/restore.
+**Acceptkriterium:** En autoriseret kunde kan konfigurere ét fagsystems API-base-URL, gennemføre en syntetisk analyse via ECK-hostet HTTPS-proxy, få en rapport og få aggregater slettet efter aftalt periode. Rå indholdsværdier må ikke kunne findes i ECK's persistente systemer, og en anden tenant må ikke læse eller påvirke analysen.
