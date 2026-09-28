@@ -9,6 +9,7 @@ ECK is an integration layer for mapping API traffic from existing systems and ev
 - `integrations/`: optional CMS and proxy integrations.
 - `infra/`: deployment configuration and operational instructions.
 - `docs/specs/`: technical design documents.
+- `docs/architecture/KUBERNETES_SAAS.md`: target SaaS architecture and delivery gates.
 - `tools/`: development and deployment helpers.
 
 ## Development
@@ -16,3 +17,7 @@ ECK is an integration layer for mapping API traffic from existing systems and ev
 Requires Node.js 20+ and pnpm 9.15.4. Copy `.env.example` to `.env`, set local credentials, then run `pnpm install`, `pnpm build` and `pnpm test`. See the package scripts and `infra/` for service-specific setup. The example values in the local Compose file are for development only.
 
 This repository was imported from the ECK directory in a project archive. Internal legal, commercial and planning drafts from that archive are excluded from this public code repository. Some configuration and implementation files in the supplied snapshot are empty placeholders; the build and tests have not been verified.
+
+## Deployment direction
+
+The target product is a multi-tenant SaaS on Kubernetes. The architecture and security requirements are in [KUBERNETES_SAAS.md](docs/architecture/KUBERNETES_SAAS.md). Existing Docker Compose and single-server deployment guides are historical/development material, not the target production deployment. No Kubernetes production deployment is claimed for this snapshot.
