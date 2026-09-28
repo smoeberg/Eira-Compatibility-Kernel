@@ -2,6 +2,8 @@
 
 **Beslutning:** ECK leveres som multitenant SaaS på Kubernetes. Fingerprint i fase A bruger en [Eira-hostet pass-through-proxy uden installation hos kunden](FINGERPRINT_DATA_FLOW.md). Kommune-IT ændrer kun API-base-URL i de fagsystemer, der tillader det. Eksisterende Compose- og Simply/Hetzner-vejledninger beskriver tidligere forslag eller udvikling, ikke en produktionsklar Kubernetes-udrulning.
 
+Opsætning, prøvekørsel og rollback følger en [state machine pr. integration](SETUP_AND_ROLLBACK.md). Analyseudløb stopper lagring, mens proxyen fortsætter passthrough frem til verificeret rollback.
+
 ## Produkt og datagrænse
 
 - **Fase A:** Fagsystem → ECK's tenant-specifikke HTTPS-proxy → oprindelig API. Rå trafik passerer ECK i hukommelsen, men kun tilladte strukturaggregater må gemmes og rapporteres. Ingen lokal ECK-agent, DNS-ændring eller generel TLS-inspektion hos kunden.

@@ -10,6 +10,7 @@ ECK is an integration layer for mapping API traffic from existing systems and ev
 - `infra/`: deployment configuration and operational instructions.
 - `docs/specs/`: technical design documents.
 - `docs/architecture/KUBERNETES_SAAS.md`: target SaaS architecture and delivery gates.
+- `docs/architecture/SETUP_AND_ROLLBACK.md`: guided per-integration setup, verification and rollback.
 - `tools/`: development and deployment helpers.
 
 ## Development
