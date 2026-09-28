@@ -1,6 +1,7 @@
 export interface IngestFingerprintDto {
   tenantId: string;
   runId?: string;
+  integrationId?: string;
   method: string;
   path: string;
   pathRaw?: string;

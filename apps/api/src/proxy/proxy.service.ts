@@ -1,140 +1,73 @@
-import {
-  Injectable,
-  Logger,
-  NotFoundException,
-  ServiceUnavailableException,
-} from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import type { Request, Response } from "express";
-import { createHash } from "node:crypto";
-import { extractSlugFromHost, isFingerprintProxyHost } from "../config/eck.config";
-import { FingerprintRunService } from "../fingerprint/fingerprint-run.service";
+import { Readable } from "node:stream";
+import { OnboardingService } from "../onboarding/onboarding.service";
 import { FingerprintService } from "../fingerprint/fingerprint.service";
-import { TenantService } from "../tenants/tenant.service";
 
-const HOP_BY_HOP = new Set([
-  "connection",
-  "keep-alive",
-  "proxy-authenticate",
-  "proxy-authorization",
-  "te",
-  "trailers",
-  "transfer-encoding",
-  "upgrade",
-  "host",
-]);
+const HOP_HEADERS = new Set(["connection", "keep-alive", "proxy-authenticate", "proxy-authorization", "te", "trailer", "transfer-encoding", "upgrade", "host", "content-length", "x-forwarded-host", "x-forwarded-for", "x-forwarded-proto"]);
 
 @Injectable()
 export class ProxyService {
   private readonly logger = new Logger(ProxyService.name);
-
-  constructor(
-    private readonly tenantService: TenantService,
-    private readonly fingerprintService: FingerprintService,
-    private readonly runService: FingerprintRunService,
-  ) {}
+  constructor(private readonly onboarding: OnboardingService, private readonly fingerprint: FingerprintService) {}
 
   isProxyRequest(hostname: string): boolean {
-    return isFingerprintProxyHost(hostname);
+    const domain = process.env.ECK_FP_DOMAIN?.toLowerCase();
+    return Boolean(domain && hostname.toLowerCase().endsWith(`.${domain}`));
   }
 
   async handle(req: Request, res: Response): Promise<void> {
-    const slug = extractSlugFromHost(req.hostname);
-    if (!slug) {
-      res.status(404).json({ message: "Unknown fingerprint host" });
+    const host = req.hostname.toLowerCase();
+    const setup = await this.onboarding.findForHost(host);
+    if (!setup || ["draft", "ready", "unsupported"].includes(setup.status)) {
+      res.status(404).json({ message: "Unknown or inactive integration" });
       return;
     }
-
-    let tenant;
-    try {
-      tenant = await this.tenantService.findBySlug(slug);
-    } catch {
-      throw new NotFoundException(`Tenant "${slug}" not found`);
+    // URL() accepts //other-host as an authority override. Only origin-relative
+    // paths may be forwarded. Do not put the rejected URL into logs.
+    const path = req.url;
+    if (!path.startsWith("/") || path.startsWith("//") || path.includes("\\")) {
+      res.status(400).json({ message: "Invalid path" });
+      return;
     }
-
-    const targetUrl = new URL(req.url, `${tenant.legacyBaseUrl}/`);
-    const started = Date.now();
-
-    const forwardHeaders = new Headers();
+    const target = new URL(path, `${setup.upstreamUrl}/`);
+    if (target.origin !== setup.upstreamUrl) {
+      res.status(400).json({ message: "Invalid upstream" });
+      return;
+    }
+    const headers = new Headers();
     for (const [key, value] of Object.entries(req.headers)) {
-      if (HOP_BY_HOP.has(key.toLowerCase())) continue;
-      if (value === undefined) continue;
-      forwardHeaders.set(key, Array.isArray(value) ? value.join(", ") : value);
+      if (HOP_HEADERS.has(key.toLowerCase()) || value === undefined) continue;
+      headers.set(key, Array.isArray(value) ? value.join(", ") : value);
     }
-
-    let body: Buffer | undefined;
-    if (req.method !== "GET" && req.method !== "HEAD") {
-      body = await this.readBody(req);
-    }
-
-    const payloadHash = body
-      ? createHash("sha256").update(body).digest("hex")
-      : undefined;
-
-    let upstream: Response;
+    let upstream: globalThis.Response;
     try {
-      upstream = await fetch(targetUrl, {
-        method: req.method,
-        headers: forwardHeaders,
-        body: body as BodyInit | undefined,
-        redirect: "manual",
-      });
-    } catch (err) {
-      this.logger.error(`Upstream failed for ${slug}: ${(err as Error).message}`);
-      res.status(502).json({ message: "Legacy upstream unavailable" });
+      upstream = await fetch(target, {
+        method: req.method, headers, redirect: "manual", signal: AbortSignal.timeout(30_000),
+        body: ["GET", "HEAD"].includes(req.method) ? undefined : Readable.toWeb(req) as ReadableStream,
+        duplex: "half",
+      } as RequestInit & { duplex: "half" });
+    } catch {
+      // No URL, headers, body or token is logged on failure.
+      this.logger.warn(`Upstream unavailable for integration ${setup.id}`);
+      res.status(502).json({ message: "Upstream unavailable" });
       return;
     }
-
-    const latencyMs = Date.now() - started;
-    const activeRun = await this.runService.getActiveRunForTenant(tenant.id);
-
-    if (activeRun) {
-      try {
-        await this.fingerprintService.ingest({
-          tenantId: tenant.id,
-          runId: activeRun.id,
-          method: req.method,
-          path: req.url.split("?")[0] ?? req.url,
-          pathRaw: req.url,
-          requestHeaders: this.sanitizeHeaders(req.headers),
-          responseStatus: upstream.status,
-          latencyMs,
-          payloadHash,
-        });
-      } catch (err) {
-        this.logger.warn(`Ingest failed: ${(err as Error).message}`);
+    try {
+      const observation = await this.onboarding.observeHost(host, upstream.status);
+      if (observation?.record) {
+        await this.fingerprint.ingest({ tenantId: setup.tenantId, integrationId: setup.id,
+          method: req.method, path: path.split("?")[0] ?? "/", responseStatus: upstream.status });
       }
+    } catch {
+      this.logger.warn(`Observation failed for integration ${setup.id}`);
     }
-
     res.status(upstream.status);
     upstream.headers.forEach((value, key) => {
-      if (HOP_BY_HOP.has(key.toLowerCase())) return;
-      res.setHeader(key, value);
+      if (!HOP_HEADERS.has(key.toLowerCase())) res.setHeader(key, value);
     });
-
-    const responseBody = Buffer.from(await upstream.arrayBuffer());
-    res.send(responseBody);
-  }
-
-  private async readBody(req: Request): Promise<Buffer> {
-    const chunks: Buffer[] = [];
-    for await (const chunk of req) {
-      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
-    }
-    return Buffer.concat(chunks);
-  }
-
-  private sanitizeHeaders(
-    headers: Request["headers"],
-  ): Record<string, unknown> {
-    const out: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(headers)) {
-      if (key.toLowerCase() === "authorization") {
-        out[key] = typeof value === "string" ? value.split(" ")[0] : "Bearer";
-        continue;
-      }
-      if (key.toLowerCase() === "cookie") continue;
-      out[key] = value;
-    }
-    return out;
+    if (upstream.body) {
+      Readable.fromWeb(upstream.body as Parameters<typeof Readable.fromWeb>[0]).pipe(res);
+    } else res.end();
   }
 }

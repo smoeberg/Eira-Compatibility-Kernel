@@ -8,7 +8,7 @@ export function createRequestLoggingMiddleware(
 ) {
   return (req: Request, res: Response, next: NextFunction) => {
     const start = Date.now();
-    const correlationId = req.correlationId ?? req.header("x-request-id");
+    const correlationId = (req as Request & { correlationId?: string }).correlationId ?? req.header("x-request-id");
     const serviceId =
       (req as Request & { eckServiceId?: string }).eckServiceId ??
       req.header("x-eck-service-id") ??
@@ -16,7 +16,13 @@ export function createRequestLoggingMiddleware(
 
     res.on("finish", () => {
       const durationMs = Date.now() - start;
-      const path = req.originalUrl ?? req.url ?? "/";
+      const rawPath = req.originalUrl ?? req.url ?? "/";
+      // No raw path or query is allowed in logs or metric labels.
+      const path = rawPath.startsWith("/health") ? "/health" :
+        rawPath.startsWith("/ready") ? "/ready" :
+        rawPath.startsWith("/metrics") ? "/metrics" :
+        rawPath.startsWith("/auth/") ? "/auth" :
+        rawPath.startsWith("/api/") ? "/api" : "/proxy";
       const skip =
         path === "/health" ||
         path === "/ready" ||
@@ -26,7 +32,7 @@ export function createRequestLoggingMiddleware(
       recordHttpRequest({
         service,
         method: req.method,
-        path: path.split("?")[0] ?? path,
+        path,
         statusCode: res.statusCode,
         durationMs,
       });

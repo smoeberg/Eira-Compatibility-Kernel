@@ -11,7 +11,7 @@ import { TenantService } from "./tenant.service";
 
 @Module({
   imports: [FingerprintModule, AuditModule],
-  controllers: [TenantAdminController, RunAdminController],
+  controllers: [TenantAdminController],
   providers: [TenantService, SetupService, AdminAuthGuard, BffSignatureGuard, ServiceIdentityGuard, UserContextGuard],
   exports: [TenantService, SetupService],
 })
