@@ -3,9 +3,8 @@ import {
   externalRef,
   isCanonicalEntity,
   type CanonicalUser,
-} from "../canonical";
-import type { TranslationContext } from "./context";
-import type { PlatformInboundMapper, PlatformOutboundMapper } from "./mapper";
+} from "../../canonical";
+import type { PlatformInboundMapper, PlatformOutboundMapper } from "../mapper";
 
 /** Minimal Graph user shape — expand as contract tests grow. */
 export interface GraphUser {

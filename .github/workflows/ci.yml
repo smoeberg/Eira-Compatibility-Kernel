@@ -27,11 +27,11 @@ jobs:
       - name: Install
         run: pnpm install
 
-      - name: Test
-        run: pnpm test
-
       - name: Build
         run: pnpm build
+
+      - name: Test
+        run: pnpm test
 
   docker:
     runs-on: ubuntu-latest
@@ -63,6 +63,10 @@ jobs:
           done
           docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T api node -e "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
           docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T bff node -e "fetch('http://127.0.0.1:3001/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+
+      - name: Container diagnostics
+        if: failure()
+        run: docker compose -f docker-compose.yml -f docker-compose.prod.yml logs --no-color --tail=100 api bff
 
       - name: Tear down
         if: always()

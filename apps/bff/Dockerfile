@@ -12,14 +12,7 @@ RUN pnpm --filter @eck/observability build && pnpm --filter @eck/bff-core build 
 FROM node:22-alpine
 WORKDIR /app
 ENV NODE_ENV=production
-COPY --from=build /app/apps/bff/dist ./dist
-COPY --from=build /app/apps/bff/package.json ./
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/packages/observability/dist ./node_modules/@eck/observability/dist
-COPY --from=build /app/packages/observability/package.json ./node_modules/@eck/observability/
-COPY --from=build /app/packages/service-auth/dist ./node_modules/@eck/service-auth/dist
-COPY --from=build /app/packages/service-auth/package.json ./node_modules/@eck/service-auth/
-COPY --from=build /app/packages/bff-core/dist ./node_modules/@eck/bff-core/dist
-COPY --from=build /app/packages/bff-core/package.json ./node_modules/@eck/bff-core/
+# Preserve pnpm's workspace symlinks and package-local node_modules.
+COPY --from=build /app /app
 EXPOSE 3001
-CMD ["node", "dist/main.js"]
+CMD ["node", "apps/bff/dist/main.js"]

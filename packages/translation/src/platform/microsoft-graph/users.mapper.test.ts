@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { PLATFORM_IDS } from "../canonical";
+import { PLATFORM_IDS } from "../../canonical";
 import {
   graphUserInbound,
   graphUserOutbound,
-} from "./microsoft-graph/users.mapper";
+} from "./users.mapper";
 
 describe("microsoft-graph users mapper", () => {
   const ctx = {

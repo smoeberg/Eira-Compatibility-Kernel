@@ -34,6 +34,7 @@ export const fingerprintLog = pgTable("fingerprint_log", {
   id: uuid("id").primaryKey().defaultRandom(),
   tenantId: uuid("tenant_id").notNull(),
   runId: uuid("run_id").references(() => fingerprintRuns.id),
+  integrationId: uuid("integration_id"),
   method: varchar("method", { length: 10 }),
   path: text("path"),
   pathRaw: text("path_raw"),
@@ -72,4 +73,29 @@ export const auditLog = pgTable("audit_log", {
   path: text("path"),
   metadata: jsonb("metadata"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+});
+
+export const integrationSetups = pgTable("integration_setups", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  proxyHost: varchar("proxy_host", { length: 255 }).notNull().unique(),
+  state: jsonb("state").notNull(),
+  version: integer("version").notNull().default(0),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const integrationSetupEvents = pgTable("integration_setup_events", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  integrationId: uuid("integration_id").notNull().references(() => integrationSetups.id),
+  event: varchar("event", { length: 64 }).notNull(),
+  actor: varchar("actor", { length: 128 }).notNull(),
+  fromStatus: varchar("from_status", { length: 32 }).notNull(),
+  toStatus: varchar("to_status", { length: 32 }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const tenantMemberships = pgTable("tenant_memberships", {
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
+  userSub: varchar("user_sub", { length: 128 }).notNull(),
+  role: varchar("role", { length: 32 }).notNull(),
 });

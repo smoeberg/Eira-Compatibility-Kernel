@@ -10,14 +10,17 @@ declare module "express-session" {
   interface SessionData {
     oidcState?: string;
     oidcVerifier?: string;
+    oidcNonce?: string;
     oidcReturn?: string;
     user?: EckSessionUser;
   }
 }
 
-declare module "express-serve-static-core" {
-  interface Request {
-    correlationId?: string;
-    rawBody?: Buffer;
+declare global {
+  namespace Express {
+    interface Request {
+      correlationId?: string;
+      rawBody?: Buffer;
+    }
   }
 }

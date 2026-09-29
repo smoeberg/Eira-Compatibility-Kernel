@@ -7,13 +7,12 @@ import {
   calculateCompatibilityScore,
   classifyPath,
   loadCapabilityMatrix,
-  normalizePath,
+  patternToRegex,
 } from "@eck/fingerprint";
 import { eq } from "drizzle-orm";
 import { getDb, schema } from "../db";
 import { FingerprintRunService } from "./fingerprint-run.service";
 import type { IngestFingerprintDto, ScoreFromLogsDto } from "./fingerprint.dto";
-import { sanitizeHeaders } from "./sanitize-headers";
 
 @Injectable()
 export class FingerprintService {
@@ -31,20 +30,26 @@ export class FingerprintService {
       await this.runService.assertRunAcceptsIngest(dto.runId, dto.tenantId);
     }
 
-    const normalizedPath = normalizePath(dto.path);
-    const category = classifyPath(dto.path);
-    const headers = sanitizeHeaders(dto.requestHeaders);
+    // Only routes in a reviewed capability registry may leave the proxy in storage.
+    // Unknown paths may contain names, case numbers or tokens.
+    const pathOnly = (dto.path.split("?")[0] ?? "").replace(/^\/(?:v1\.0|beta)(?=\/)/i, "");
+    const normalizedPath = this.matrix.routes.find((route) =>
+      patternToRegex(route.pattern).test(pathOnly) &&
+      Boolean(route.methods[dto.method.toUpperCase()] ?? route.methods["*"]),
+    )?.pattern ?? "/unknown";
+    const category = normalizedPath === "/unknown" ? "other" : classifyPath(normalizedPath);
 
     const row = {
       tenantId: dto.tenantId,
       runId: dto.runId ?? null,
+      integrationId: dto.integrationId ?? null,
       method: dto.method.toUpperCase(),
       path: normalizedPath,
-      pathRaw: dto.pathRaw ?? dto.path,
-      requestHeaders: headers,
+      pathRaw: null,
+      requestHeaders: null,
       responseStatus: dto.responseStatus ?? null,
       latencyMs: dto.latencyMs ?? null,
-      payloadHash: dto.payloadHash ?? null,
+      payloadHash: null,
       category,
     };
 

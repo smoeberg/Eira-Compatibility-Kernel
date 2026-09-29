@@ -54,6 +54,38 @@ export interface FingerprintRun {
   daysRemaining: number;
 }
 
+export type SetupStatus = "draft" | "ready" | "awaiting_traffic" | "trial" | "active" |
+  "passthrough_only" | "rollback_pending" | "closed" | "incident" | "unsupported";
+export interface IntegrationSetup {
+  id: string;
+  tenantId: string;
+  name: string;
+  environment: "test" | "production";
+  status: SetupStatus;
+  proxyUrl: string;
+  upstreamUrl: string;
+  trialEndsAt?: string;
+  recordingEndsAt?: string;
+  firstSuccessfulCallAt?: string;
+  lastProxyCallAt?: string;
+  observedCalls: number;
+  successfulCalls: number;
+  customerConfirmed: boolean;
+  rollbackConfirmedAt?: string;
+  reason?: string;
+}
+
+export type SetupTransition =
+  | { type: "mark_ready"; preflightConfirmed: true }
+  | { type: "mark_unsupported"; reason: string }
+  | { type: "configuration_saved" }
+  | { type: "confirm_trial"; customerSawExpectedResult: true }
+  | { type: "start_recording"; durationDays: number }
+  | { type: "stop_recording" }
+  | { type: "begin_rollback" }
+  | { type: "confirm_rollback"; directCallSucceeded: true; customerRestoredUrl: true }
+  | { type: "incident"; reason: string };
+
 export interface SetupPayload {
   proxyUrl: string;
   legacyUrl: string;
@@ -146,6 +178,11 @@ export interface CompatibilityReportResponse {
 }
 
 export const eckApi = {
+  listIntegrations: (tenantId: string) => api<IntegrationSetup[]>(`/api/v1/tenants/${tenantId}/integrations`),
+  createIntegration: (tenantId: string, body: { name: string; environment: "test" | "production"; upstreamUrl: string }) =>
+    api<IntegrationSetup>(`/api/v1/tenants/${tenantId}/integrations`, { method: "POST", body: JSON.stringify(body) }),
+  transitionIntegration: (tenantId: string, id: string, event: SetupTransition) =>
+    api<IntegrationSetup>(`/api/v1/tenants/${tenantId}/integrations/${id}/transitions`, { method: "POST", body: JSON.stringify(event) }),
   listTenants: () => api<Tenant[]>("/api/v1/tenants"),
   createTenant: (body: {
     slug: string;

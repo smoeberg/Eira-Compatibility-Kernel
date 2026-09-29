@@ -1,5 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { db } from "../db";
+import { getDb } from "../db";
 import { auditLog } from "../db/schema";
 
 export interface AuditEntry {
@@ -34,6 +34,8 @@ export class AuditService {
     this.logger.log(line);
 
     try {
+      const db = getDb();
+      if (!db) return;
       await db.insert(auditLog).values({
         action: entry.action,
         userSub: entry.userSub ?? null,

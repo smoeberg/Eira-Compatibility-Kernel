@@ -11,13 +11,14 @@
     "predev": "pnpm --filter @eck/observability build && pnpm --filter @eck/bff-core build && pnpm --filter @eck/service-auth build"
   },
   "dependencies": {
+    "@eck/bff-core": "workspace:*",
     "@eck/observability": "workspace:*",
     "@eck/service-auth": "workspace:*",
-    "@eck/bff-core": "workspace:*",
     "@nestjs/common": "^11.0.10",
     "@nestjs/core": "^11.0.10",
     "@nestjs/platform-express": "^11.0.10",
     "express-session": "^1.18.1",
+    "jose": "^6.2.12",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2"
   },
