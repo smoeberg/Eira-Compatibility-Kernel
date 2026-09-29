@@ -27,6 +27,8 @@ Set `DATABASE_URL`, `ECK_FP_DOMAIN` (the wildcard DNS/TLS domain), and a comma-s
 
 The state machine and synthetic proxy tests are in `apps/api/src/onboarding`. They cover unsuccessful and successful upstream calls, explicit confirmation, expiry and continued forwarding after rollback. The current portal shows live counters and setup transitions; its readiness and volume indicators are not a verified baseline, and the new integration records are not yet wired to report/PDF generation. Do not use this branch for a customer production run until database migration, real upstream compatibility, durable BFF sessions, operational controls and retention are verified.
 
+The admin console uses `/tenants/:tenantId/integrations/:integrationId` as its setup workspace. Its former run view is removed; the integration report is still pending API work. Production browser access uses the BFF OIDC session and the portal CSP; the API-key login remains a development-only path with session-scoped storage. Run `pnpm --filter @eck/admin test` for the integration confirmation UI test.
+
 ## Deployment direction
 
 The target product is a multi-tenant SaaS on Kubernetes. The fingerprint phase uses an ECK-hosted pass-through proxy: the customer changes a configurable API base URL, without installing an ECK component. Raw traffic passes through ECK in memory; only approved structural aggregates may be persisted. See [KUBERNETES_SAAS.md](docs/architecture/KUBERNETES_SAAS.md) and [FINGERPRINT_DATA_FLOW.md](docs/architecture/FINGERPRINT_DATA_FLOW.md). Existing Docker Compose and single-server deployment guides are historical/development material, not the target production deployment. No Kubernetes production deployment is claimed for this snapshot.

@@ -35,26 +35,27 @@ export function NewTenantPage() {
       <h1>Ny tenant</h1>
       <form onSubmit={submit} className="card stack">
         <label>
-          Slug (subdomæne)
+          Tenant-slug
           <input
             value={slug}
             onChange={(e) => setSlug(e.target.value)}
             placeholder="hvidovre"
             required
           />
-          <span className="hint">→ {slug || "slug"}.fp.eira-systems.eu</span>
+          <span className="hint">Identificerer tenant i portalen. En unik proxyadresse oprettes senere pr. integration.</span>
         </label>
         <label>
           Navn
           <input value={name} onChange={(e) => setName(e.target.value)} required />
         </label>
         <label>
-          Legacy API URL
+          Standard-API-origin (historisk påkrævet felt)
           <input
             value={legacyBaseUrl}
             onChange={(e) => setLegacyBaseUrl(e.target.value)}
             required
           />
+          <span className="hint">Nye integrationer bruger deres egen upstream-URL. Dette felt bruges ikke til at danne proxyadressen.</span>
         </label>
         <label>
           IT kontakt (valgfri)

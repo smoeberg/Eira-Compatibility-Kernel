@@ -4,8 +4,8 @@ import { fetchAuthMe, getAdminKey, usesSessionAuth } from "./api/client";
 import { DashboardPage } from "./pages/DashboardPage";
 import { LoginPage } from "./pages/LoginPage";
 import { NewTenantPage } from "./pages/NewTenantPage";
-import { RunDetailPage } from "./pages/RunDetailPage";
 import { TenantDetailPage } from "./pages/TenantDetailPage";
+import { IntegrationWorkspacePage } from "./pages/IntegrationWorkspacePage";
 import { Layout } from "./Layout";
 
 function RequireAuth({ children }: { children: ReactNode }) {
@@ -48,7 +48,8 @@ export function App() {
         <Route path="/" element={<DashboardPage />} />
         <Route path="/tenants/new" element={<NewTenantPage />} />
         <Route path="/tenants/:id" element={<TenantDetailPage />} />
-        <Route path="/runs/:runId" element={<RunDetailPage />} />
+        <Route path="/tenants/:tenantId/integrations/:integrationId" element={<IntegrationWorkspacePage />} />
+        <Route path="/runs/:runId" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
   );
