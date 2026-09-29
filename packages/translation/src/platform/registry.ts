@@ -1,6 +1,6 @@
 import { patternToRegex } from "@eck/fingerprint";
-import type { PlatformId } from "./canonical";
-import type { PlatformMapperRegistry, PlatformRouteMapper } from "./platform/mapper";
+import type { PlatformId } from "../canonical";
+import type { PlatformMapperRegistry, PlatformRouteMapper } from "./mapper";
 
 export class InMemoryPlatformMapperRegistry implements PlatformMapperRegistry {
   private readonly mappers: PlatformRouteMapper[] = [];

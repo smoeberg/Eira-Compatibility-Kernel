@@ -1,4 +1,4 @@
-import { BACKEND_IDS } from "@eck/translation";
+import { BACKEND_IDS, type BackendId } from "@eck/translation";
 import {
   AdapterNotImplementedError,
   type AdapterContext,
@@ -12,7 +12,7 @@ function notImplemented(method: string): never {
 
 /** WebDAV / OCS — first V1 storage plugin. */
 export class NextcloudStorageAdapter implements IStorageAdapter {
-  readonly pluginId = BACKEND_IDS.NEXTCLOUD;
+  readonly pluginId: BackendId = BACKEND_IDS.NEXTCLOUD;
   readonly domain = "storage" as const;
 
   async health(_ctx: AdapterContext): Promise<AdapterHealth> {
@@ -20,30 +20,30 @@ export class NextcloudStorageAdapter implements IStorageAdapter {
   }
 
   async getItem(_ctx: AdapterContext, _id: string) {
-    notImplemented("getItem");
+    return notImplemented("getItem");
   }
 
   async listChildren(_ctx: AdapterContext, _parentId?: string) {
-    notImplemented("listChildren");
+    return notImplemented("listChildren");
   }
 
   async createItem(_ctx: AdapterContext, _payload: unknown) {
-    notImplemented("createItem");
+    return notImplemented("createItem");
   }
 
   async updateItem(_ctx: AdapterContext, _id: string, _patch: unknown) {
-    notImplemented("updateItem");
+    return notImplemented("updateItem");
   }
 
   async deleteItem(_ctx: AdapterContext, _id: string) {
-    notImplemented("deleteItem");
+    return notImplemented("deleteItem");
   }
 
   async getContent(_ctx: AdapterContext, _id: string) {
-    notImplemented("getContent");
+    return notImplemented("getContent");
   }
 
   async putContent(_ctx: AdapterContext, _id: string, _content: Uint8Array) {
-    notImplemented("putContent");
+    return notImplemented("putContent");
   }
 }

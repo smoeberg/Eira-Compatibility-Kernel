@@ -19,38 +19,38 @@ export class LdapIdentityAdapter implements IIdentityAdapter {
   }
 
   async getUser(_ctx: AdapterContext, _id: string) {
-    notImplemented("getUser");
+    return notImplemented("getUser");
   }
 
   async listUsers(_ctx: AdapterContext) {
-    notImplemented("listUsers");
+    return notImplemented("listUsers");
   }
 
   async createUser(_ctx: AdapterContext, _payload: unknown) {
-    notImplemented("createUser");
+    return notImplemented("createUser");
   }
 
   async updateUser(_ctx: AdapterContext, _id: string, _patch: unknown) {
-    notImplemented("updateUser");
+    return notImplemented("updateUser");
   }
 
   async deleteUser(_ctx: AdapterContext, _id: string) {
-    notImplemented("deleteUser");
+    return notImplemented("deleteUser");
   }
 
   async getGroup(_ctx: AdapterContext, _id: string) {
-    notImplemented("getGroup");
+    return notImplemented("getGroup");
   }
 
   async listGroupMembers(_ctx: AdapterContext, _groupId: string) {
-    notImplemented("listGroupMembers");
+    return notImplemented("listGroupMembers");
   }
 
   async getIdentity(_ctx: AdapterContext, _id: string) {
-    notImplemented("getIdentity");
+    return notImplemented("getIdentity");
   }
 
   async createIdentity(_ctx: AdapterContext, _payload: unknown) {
-    notImplemented("createIdentity");
+    return notImplemented("createIdentity");
   }
 }
