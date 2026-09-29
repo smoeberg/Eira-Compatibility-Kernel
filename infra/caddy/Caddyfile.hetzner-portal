@@ -2,6 +2,12 @@
 
 # Portal: admin SPA + NestJS BFF
 eck.eira-systems.eu {
+	header {
+		Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; form-action 'self'"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		X-Content-Type-Options "nosniff"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+	}
 	handle /api/* {
 		reverse_proxy bff:3001
 	}

@@ -10,15 +10,16 @@ export function usesSessionAuth(): boolean {
 }
 
 export function getAdminKey(): string {
-  return localStorage.getItem(KEY) ?? "";
+  return usesSessionAuth() ? "" : sessionStorage.getItem(KEY) ?? "";
 }
 
 export function setAdminKey(key: string): void {
-  localStorage.setItem(KEY, key);
+  if (!usesSessionAuth()) sessionStorage.setItem(KEY, key);
 }
 
 export function clearAdminKey(): void {
-  localStorage.removeItem(KEY);
+  sessionStorage.removeItem(KEY);
+  localStorage.removeItem(KEY); // clear keys saved by older admin builds
 }
 
 export interface AuthMeResponse {
@@ -42,16 +43,6 @@ export interface Tenant {
   contactEmail: string | null;
   proxyUrl: string;
   createdAt: string;
-}
-
-export interface FingerprintRun {
-  id: string;
-  tenantId: string;
-  startedAt: string;
-  endsAt: string;
-  status: string;
-  mirrorPercent: number;
-  daysRemaining: number;
 }
 
 export type SetupStatus = "draft" | "ready" | "awaiting_traffic" | "trial" | "active" |
@@ -86,18 +77,6 @@ export type SetupTransition =
   | { type: "confirm_rollback"; directCallSucceeded: true; customerRestoredUrl: true }
   | { type: "incident"; reason: string };
 
-export interface SetupPayload {
-  proxyUrl: string;
-  legacyUrl: string;
-  runId: string;
-  tenantId: string;
-  slug: string;
-  endsAt: string;
-  daysRemaining: number;
-  status: string;
-  instructions: string[];
-}
-
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const key = getAdminKey();
   const headers: Record<string, string> = {
@@ -118,67 +97,21 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
     credentials: usesSessionAuth() ? "include" : "same-origin",
   });
   if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || res.statusText);
+    let message = "Anmodningen kunne ikke gennemføres.";
+    try {
+      const body = await res.json() as { message?: string | string[] };
+      if (body.message) message = Array.isArray(body.message) ? body.message.join(" ") : body.message;
+    } catch { /* Do not expose an HTML error page or stack trace in the UI. */ }
+    if (res.status === 409) message = `Handlingen er ikke tilladt i den nuværende tilstand. ${message}`;
+    throw new Error(message);
   }
   return res.json() as Promise<T>;
 }
 
-export interface CompatibilityReportDocument {
-  schemaVersion: "1.0";
-  reportId: string;
-  runId: string;
-  tenantId: string;
-  tenant: { slug: string; name: string };
-  generatedAt: string;
-  observation: {
-    startedAt: string;
-    endsAt: string;
-    durationDays: number;
-    callCount: number;
-    uniqueEndpoints: number;
-  };
-  score: {
-    totalPercent: number;
-    recommendation: "green" | "yellow" | "red";
-    recommendationLabel: string;
-    byCategory: Record<
-      string,
-      { score: number; calls: number; native: number; emulated: number; gap: number }
-    >;
-    matrixVersion: string;
-  };
-  gaps: Array<{
-    method: string;
-    path: string;
-    normalizedPath: string;
-    category: string;
-    support: string;
-    callCount: number;
-  }>;
-  topEndpoints: Array<{
-    method: string;
-    path: string;
-    normalizedPath: string;
-    category: string;
-    support: string;
-    callCount: number;
-  }>;
-  disclaimers: {
-    status: string;
-    primary: string;
-    secondary: string;
-  };
-  metadata: { product: string; phase: string; locale: string };
-}
-
-export interface CompatibilityReportResponse {
-  schemaVersion: "1.0";
-  report: CompatibilityReportDocument;
-}
-
 export const eckApi = {
   listIntegrations: (tenantId: string) => api<IntegrationSetup[]>(`/api/v1/tenants/${tenantId}/integrations`),
+  getIntegration: (tenantId: string, id: string) =>
+    api<IntegrationSetup>(`/api/v1/tenants/${tenantId}/integrations/${id}`),
   createIntegration: (tenantId: string, body: { name: string; environment: "test" | "production"; upstreamUrl: string }) =>
     api<IntegrationSetup>(`/api/v1/tenants/${tenantId}/integrations`, { method: "POST", body: JSON.stringify(body) }),
   transitionIntegration: (tenantId: string, id: string, event: SetupTransition) =>
@@ -191,19 +124,4 @@ export const eckApi = {
     contactEmail?: string;
   }) => api<Tenant>("/api/v1/tenants", { method: "POST", body: JSON.stringify(body) }),
   getTenant: (id: string) => api<Tenant>(`/api/v1/tenants/${id}`),
-  startRun: (tenantId: string) =>
-    api<FingerprintRun>(`/api/v1/tenants/${tenantId}/runs`, { method: "POST" }),
-  listRuns: (tenantId: string) =>
-    api<FingerprintRun[]>(`/api/v1/tenants/${tenantId}/runs`),
-  getSetup: (runId: string) => api<SetupPayload>(`/api/v1/runs/${runId}/setup`),
-  getActiveSetup: (tenantId: string) =>
-    api<{ tenant: Tenant; activeRun: FingerprintRun | null; setup: SetupPayload | null }>(
-      `/api/v1/tenants/${tenantId}/runs/active/setup`,
-    ),
-  completeRun: (runId: string) =>
-    api<CompatibilityReportResponse>(`/api/v1/runs/${runId}/complete`, {
-      method: "POST",
-    }),
-  getReport: (runId: string) =>
-    api<CompatibilityReportResponse>(`/api/v1/runs/${runId}/report`),
 };

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { eckApi, type Tenant, type SetupPayload } from "../api/client";
+import { eckApi, type Tenant } from "../api/client";
 import { IntegrationSetupPanel } from "./IntegrationSetupPanel";
 
 export function TenantDetailPage() {
@@ -18,7 +18,7 @@ export function TenantDetailPage() {
   }, [id]);
 
   if (!tenant) {
-    return <div className="page">Indlæser…</div>;
+    return <div className="page">{error ? <p role="alert" className="error">{error}</p> : <p role="status">Indlæser…</p>}</div>;
   }
 
   return (
@@ -28,6 +28,7 @@ export function TenantDetailPage() {
       </Link>
       <header className="stack gap-sm">
         <h1>{tenant.name}</h1>
+        {tenant.contactEmail && <p className="muted">Kontakt: {tenant.contactEmail}</p>}
         <p className="muted">Opret en integration nedenfor for at få dens unikke proxyadresse.</p>
       </header>
 
@@ -36,12 +37,4 @@ export function TenantDetailPage() {
       <IntegrationSetupPanel tenantId={id!} />
     </div>
   );
-}
-
-/** Historical run view; new observations use IntegrationSetupPanel. */
-export function SetupBlock({ setup }: { setup: SetupPayload }) {
-  return <div className="setup stack">
-    <code className="block">{setup.proxyUrl}</code>
-    <ol>{setup.instructions.map((line) => <li key={line}>{line}</li>)}</ol>
-  </div>;
 }

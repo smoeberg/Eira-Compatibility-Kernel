@@ -13,8 +13,10 @@ export function LoginPage() {
     fetchAuthMe().then((me) => {
       if (me.authenticated) {
         navigate("/", { replace: true });
+      } else {
+        window.location.assign("/auth/login?return=%2F");
       }
-    });
+    }).catch(() => window.location.assign("/auth/login?return=%2F"));
   }, [navigate]);
 
   function submit(e: FormEvent) {
@@ -24,8 +26,6 @@ export function LoginPage() {
   }
 
   if (usesSessionAuth()) {
-    const base = import.meta.env.BASE_URL || "/";
-    window.location.href = `/auth/login?return=${encodeURIComponent(base)}`;
     return (
       <div className="page narrow">
         <p className="muted">Omdirigerer til login…</p>
