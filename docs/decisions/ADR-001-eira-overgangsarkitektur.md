@@ -8,7 +8,7 @@ Eira er en evidensmotor, som undersøger afhængigheder gennem de mindst indgrib
 
 Værktøjet registrerer API-kald både ud fra og ind til fagsystemerne. Kald fra fagsystemer til Microsoft prioriteres først, fordi det er dem, der går i stykker ved et skift til open source.
 
-Fagsystemer ændres ikke. Eira indføres gradvist i kommunens eget miljø og overtager kun Microsoft-endpoints for ruter, der er verificeret efter ADR-002.
+Fagsystemets kode og konfiguration ændres ikke, men dets vej på netværket gør, og den maskine, det kører på, skal stole på Eiras certifikat. Eira indføres gradvist i kommunens eget miljø og overtager kun Microsoft-endpoints for ruter, der er verificeret efter ADR-002.
 
 **Status:** Foreslået.
 
@@ -78,7 +78,7 @@ ECK-OBS-kravene gælder Discovery, og ECK-TRN-kravene gælder overgangen. `verif
 | Trin | Hvad sker der | Indgreb | Kriterium for næste trin |
 | --- | --- | --- | --- |
 | 1. Discovery | Kilderne i kildehierarkiet viser omfang og afhængigheder | Ingen ændring af fagsystem eller trafikvej | Kommunen vælger de systemer, der skal skifte |
-| 2. Pass-through | I en måned passerer kald og svar uændret gennem Eira hos kommunen | Kommunens DNS og et afgrænset certifikat. Fagsystemet ændres ikke | Ruterne er registreret, og perioden er dokumenteret |
+| 2. Pass-through | I en måned passerer kald og svar uændret gennem Eira hos kommunen, først på fagsystemets testinstans | Omdirigering kun på de valgte maskiner og et afgrænset certifikat. Fagsystemets kode og konfiguration ændres ikke | Ruterne er registreret, og perioden er dokumenteret |
 | 3. Parring | Eiras svar sammenlignes med Microsofts efter ADR-002 | Isoleret testmiljø | Ruterne har en dokumenteret tilstand |
 | 4. Accepttest | Fagsystemets arbejdsgange gennemføres mod Eira i test | Testmiljø | Arbejdsgangen er bestået |
 | 5. Gradvis overtagelse | Eira svarer kun for verificerede ruter | Pr. rute, kan rulles tilbage | Alle nødvendige ruter er overtaget |
@@ -96,6 +96,8 @@ Periodiske kørsler, som ikke forekommer i måneden, forbliver `unknown`. De afd
 | ECK-TRN-006 | Overtagelse af en rute kræver status `verified` og bestået accepttest efter ADR-002. |
 | ECK-TRN-007 | En ukendt rute må aldrig automatisk få svar fra Eira. Den passerer til Microsoft eller stoppes efter en eksplicit driftsregel. |
 | ECK-TRN-008 | Hver overtagelse skal kunne rulles tilbage. |
+| ECK-TRN-009 | Omdirigering må kun gælde de valgte maskiner, så længe andre systemer stadig bruger Microsoft. |
+| ECK-TRN-010 | Pass-through starter på fagsystemets testinstans. Produktion er et senere tilvalg, som kræver en særskilt beslutning fra kommunen. |
 
 Leverandørhostede fagsystemer er uden for modellen, fordi kommunen ikke kontrollerer deres DNS eller certifikater. De rapporteres som begrænsninger.
 

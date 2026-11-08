@@ -10,7 +10,7 @@ Microsofts faktiske svar er facit for, om Eira svarer korrekt. Eira må kun over
 
 **Relateret:** ADR-001 fastlægger overgangen. Denne ADR er den normative kontrakt for måling af kompatibilitet.
 
-Fagsystemer ændres ikke. Parringsmotoren afgør kun, hvilke ruter Eira kan overtage i kommunens eget miljø.
+Fagsystemets kode og konfiguration ændres ikke. Parringsmotoren afgør kun, hvilke ruter Eira kan overtage i kommunens eget miljø.
 
 ## Sådan virker parringen
 
