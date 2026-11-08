@@ -32,9 +32,10 @@ flowchart TD
   A["Office-tilføjelse: Word og Excel"] --> D
   B["Inventarscanning: tilføjelser, skabeloner, makroer"] --> D
   C["Lokal proceskorrelation: hvem startede Office"] --> D
-  D["Lokal normalisering og dataminimering på maskinen"] --> E["Samlepunkt hos kommunen"]
-  E --> F["Kommunen godkender udtrækket"]
-  F -->|HTTPS| G["Eira Compatibility Kernel: afhængigheder, evidens og kompatibilitet"]
+  D["Lokal normalisering og dataminimering på maskinen"] --> E["Almindelig netværksmappe hos kommunen"]
+  E --> S["Eiras webside: browseren tæller sammen og kontrollerer lokalt"]
+  S --> F["Kommunens IT godkender rapportfilen"]
+  F -->|Manuel upload over HTTPS| G["Eira Compatibility Kernel: afhængigheder, evidens og kompatibilitet"]
   G --> H["Compatibility Workbench: overblik, rapporter og testresultater"]
   T["Kompatibilitetstest med godkendt testmateriale"] --> G
 ```
@@ -44,9 +45,22 @@ flowchart TD
 | Office-tilføjelse | Registrere hændelser og struktur i Word og Excel | Blokere brugerens arbejde eller sende indhold |
 | Inventarscanning | Finde tilføjelser, skabeloner og makroer | Læse almindelige brugerdokumenter |
 | Lokal proceskorrelation | Sandsynliggøre, hvilket program der startede Office | Bruge hooking eller injection |
-| Samlepunkt | Lade kommunen kontrollere, hvad der deles | Kræve forbindelse til Eira for lokal brug |
+| Netværksmappe | Opbevare de små filer, til de samles. Pc'erne må kun aflevere filer | Indeholde software fra Eira |
+| Sammentælling i browser | Tælle sammen, fjerne små tal, kontrollere felter og danne rapportfilen lokalt | Sende småfiler eller noget, der ikke er godkendt |
 | Kernel | Normalisere og vurdere | Afhænge af Windows |
 | Workbench | Vise resultater | Have adgang til medarbejdernes dokumenter |
+
+## Aflevering af data
+
+Afleveringen er manuel, og Eira installerer intet på kommunens servere.
+
+1. Office-tilføjelsen lægger små strukturfiler i en almindelig netværksmappe, som kommunen opretter.
+2. En IT-medarbejder åbner Eiras webside og vælger mappen.
+3. Browseren tæller observationerne sammen, fjerner små tal og kontrollerer, at kun tilladte felter findes. Det sker lokalt på medarbejderens pc.
+4. Medarbejderen ser rapportfilen og godkender den.
+5. Først derefter uploades rapportfilen til Eira over HTTPS, og småfilerne kan slettes.
+
+Eira har ingen forbindelse ind til kommunen. Koden på websiden skal kunne gennemgås, så kommunen kan efterprøve, at beregningen sker lokalt. Automatisk afsendelse kan overvejes senere i en særskilt beslutning.
 
 ## Tekniske begrænsninger
 
@@ -108,6 +122,8 @@ Kompatibilitetsstatus er `verificeret`, `delvist verificeret`, `gap` eller `uken
 | ECK-OCD-010 | Områder, der ikke kunne observeres, rapporteres som ukendte. |
 | ECK-OCD-011 | Licens- og adgangskontroller må ikke omgås. |
 | ECK-OCD-012 | Der føres revisionslog over indsamling, godkendelse og overførsel. |
+| ECK-OCD-013 | Eira installerer ikke software på kommunens servere. |
+| ECK-OCD-014 | Sammentælling og fjernelse af små tal sker hos kommunen, før data overføres. |
 
 ## Første leverance
 
@@ -134,7 +150,8 @@ ADR'en kan accepteres, når:
 - [ ] Den tekniske spike viser, om tilføjelsen kan bruges ved automatisering, eller beskriver alternativet.
 - [ ] Positivlisten over felter er fastlagt.
 - [ ] Kommunens og Eiras databeskyttelsesroller er vurderet juridisk.
-- [ ] Mindst én kommune har vurderet, om opsamlingsmodellen kan godkendes.
+- [ ] Mindst én kommune har vurderet, om centralt udrullet Office-tilføjelse og netværksmappe kan godkendes.
+- [ ] Grænsen for fjernelse af små tal er fastlagt.
 - [ ] Metoden til lokal proceskorrelation er valgt uden hooking.
 - [ ] Strategien for Outlook er beskrevet eller eksplicit udskudt.
 
@@ -147,7 +164,7 @@ ADR'en kan accepteres, når:
 | `score.ts` | Bruges ikke til primær visning |
 | `checkSupport` | Skal kunne skelne mellem ukendt og gap |
 | `apps/api/src/proxy` og `onboarding` | Bruges ikke i denne retning. Fjernes først efter accept |
-| Office-tilføjelse, inventar, proceskorrelation og samlepunkt | Nye komponenter |
+| Office-tilføjelse, inventar, proceskorrelation og webside til sammentælling | Nye komponenter |
 
 Ingen kode ændres, før denne ADR er accepteret.
 
