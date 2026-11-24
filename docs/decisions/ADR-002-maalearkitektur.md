@@ -28,7 +28,7 @@ COLEAT (Collabora OLE Automation Translator, 2018–2020, MPL 2.0) kan omdiriger
 
 ### LibreOffice' VBA-lag
 
-LibreOffice implementerer en delmængde af Words objektmodel i `sw/source/ui/vba` (79 interfaces i `oovbaapi/ooo/vba/word`). OLE-serveren (`extensions/source/ole/servprov.cxx`) eksponerer den som `Writer.Application` og `Calc.Application`. Gennemgang af master pr. 24. november 2026 (commit `86090b9`):
+LibreOffice implementerer en delmængde af Words objektmodel i `sw/source/ui/vba` (79 interfaces i `oovbaapi/ooo/vba/word` pr. commit `86090b9`; tallet ændrer sig). OLE-serveren (`extensions/source/ole/servprov.cxx`) eksponerer den som `Writer.Application` og `Calc.Application`. Gennemgang af master pr. 24. november 2026 (commit `86090b9`):
 
 | Kald | Status i kildekoden |
 |---|---|
@@ -73,7 +73,15 @@ Formål: en indsamlingsmetode, som en kommune kan godkende.
 - Serveren implementerer de nødvendige interfaces i typebibliotekets vtable-rækkefølge (genereret af `genproxy`) og videresender til den rigtige Word.
 - Den rigtige Word kan ikke hentes med `CoCreateInstance`, fordi registreringen peger på serveren selv. Den skal startes ad anden vej, fx `LocalServer32` fra HKLM og `winword.exe /automation` med opslag via Running Object Table.
 - Serveren indlæses i fagsystemets proces. Det er almindelig COM og ikke injektion, men det skal stå i sikkerhedsbeskrivelsen: kode fra Eira kører i fagsystemets proces under testen. Formuleringen er "ingen IAT-patching, ingen `CreateRemoteThread`, ingen ændring af fagsystemet".
-- Måleserveren og en eventuel bro må aldrig være registreret i samme profil samtidig.
+- Måleserveren og en eventuel bro må aldrig være registreret i samme profil samtidig. Skift mellem dem sker med ét script, der fjerner den ene registrering, før den anden skrives, og som logger skiftet.
+
+### Testkonto, ikke rigtige brugerprofiler
+
+Målingen kører i en dedikeret testkonto, ikke i en medarbejders profil. En rigtig profil ville betyde, at Eiras kode kører i en medarbejders session med adgang til rigtige sager. Prisen er, at testkontoen kan opføre sig anderledes end en rigtig bruger. Derfor gælder:
+
+- Testkontoen oprettes af kommunen med samme gruppemedlemskaber, shares, netværksdrev og fagsystemroller som en navngiven rolle (fx sagsbehandler i ydelsesafdelingen).
+- Rapporten angiver, hvilken rolle testkontoen efterligner.
+- Fagsystemer, der binder til brugerens SID eller profil, markeres som en kendt kilde til afvigelse.
 
 ### Kendte blinde vinkler
 
@@ -83,7 +91,7 @@ Formål: en indsamlingsmetode, som en kommune kan godkende.
 | VB6 med tidlig binding | Ja, hvis interfacet har proxy | – |
 | `ShellExecute`/kommandolinje (`winword.exe /m…`) | Nej | Procesoprettelse (4688/KQL) i inventaret |
 | DDE | Nej | Procesoprettelse, kørselstest |
-| Processer med administratorrettigheder | Nej. Elevated processer ignorerer COM-registrering pr. bruger | Skal afklares i spiken |
+| Processer med administratorrettigheder | Nej. Elevated processer ignorerer COM-registrering pr. bruger | Dækkes i første version kun af inventar og procesoprettelse og rapporteres som `not_measured` for COM. En separat elevated målemetode kræver en egen sikkerhedsgennemgang og er ikke i scope |
 | Tjenester og SYSTEM-konti, fx konverteringsservere | Nej | Serverinventar, procesoprettelse |
 | Interfaces uden typeinformation | Nej | Rapporteres som ikke målt |
 | Excels `Range` (kun dispinterface) | Ja ved sen binding via `IDispatch`, hvis typeinformationen findes ved kørsel. Ingen genereret proxy, så tidlig binding kan ikke betjenes | Verificeres i spiken |
@@ -95,6 +103,8 @@ Formål: en indsamlingsmetode, som en kommune kan godkende.
 Samme Word-objekt kan få flere proxyobjekter (fx ét fra en hændelse og ét fra en returværdi). Spor må derfor ikke bruges til at udlede, hvilke kald der hører til samme dokument, før dette er løst. TODO.txt nævner commit `4deff7ec`, som forsøger at løse det, men uden at være sikker.
 
 Identiteten kan ikke baseres på dokumentets sti. Stien er omfattet af ECK-OCD-003 og må ikke forlade maskinen. Sammenkædningen skal derfor ske lokalt med et tilfældigt id pr. dokument, og id'et må aldrig indgå i udtrækket.
+
+**Beslutning for første version:** Sporet viser, *at* et kald skete, pr. interface og medlem, men ikke *hvilket* dokument det vedrørte. Det er tilstrækkeligt til at afgøre, hvilke funktioner et fagsystem bruger. Kobling af kald til dokumenter udskydes og må ikke bruges i rapporter, før den er løst.
 
 ## Tre tilstande
 
@@ -166,11 +176,23 @@ Huller i VBA-laget løses som rettelser i LibreOffice (`sw/source/ui/vba`, `sc/s
 | ECK-MA-007 | Kontraktdata samles ikke på tværs af kommuner. |
 | ECK-MA-008 | Layouttest kører lokalt hos kommunen og bruger kommunens egne PDF'er som facit. |
 
+## Prioritering i spiken for fase B
+
+Spiken afklarer i denne rækkefølge, fordi hvert punkt kan stoppe fase B:
+
+1. **Start af den rigtige Word**, når CLSID'et er overtaget i `HKCU`: uden rekursion, med Click-to-Run-installationer og på en terminalserver.
+2. **VB6 med tidlig binding** gennem en COM-server registreret pr. bruger, uden injektion.
+3. **Bitness:** proxyer bygget til både x86 og x64.
+4. **Excels `Range`** via sen binding.
+5. **Sen binding af interfaces uden genererede proxyer**, som TODO.txt antyder.
+
+Elevated processer er ikke i spiken; se "Kendte blinde vinkler".
+
 ## Åbne punkter
 
 - [ ] Kan en COM-server registreret pr. bruger betjene VB6 med tidlig binding uden injektion?
 - [ ] Hvordan startes den rigtige Word pålideligt, når CLSID'et er overtaget, også på terminalservere?
-- [ ] Hvordan håndteres fagsystemer, der kører med administratorrettigheder?
+- [ ] Skal der senere være en separat elevated målemetode?
 - [ ] Kan sen binding spore interfaces uden genererede proxyer, som TODO.txt antyder? Hvis ja, gælder begrænsningen kun VB6.
 - [ ] Hvordan løses objektidentitet i sporet, og er `4deff7ec` tilstrækkeligt?
 - [ ] Kan proxyerne bygges i både x86 og x64, og hvad sker der, når fagsystem og Office har forskellig bitness?
@@ -186,6 +208,7 @@ ADR-002 kan accepteres, når:
 - [ ] Fase A har givet et rigtigt spor fra mindst ét fagsystem i laboratoriet.
 - [ ] Spiken for fase B har vist, om tidlig og sen binding kan måles uden injektion, eller beskrevet alternativet.
 - [ ] Sporformatet er fastlagt, inklusive de tre tilstande og koblingen til evidensniveauerne.
+- [ ] Sporformatet er implementeret i både fase A og fase B, og mindst ét fagsystem har gennemført en fuld målecyklus i laboratoriet.
 - [ ] ECK-OCD-005 er rettet i ADR-001 med ordlyden under "Rækkefølgen for præciseringen". Dette kriterium kan opfyldes før Fase A og skal ikke vente på denne ADR.
 
 ## Konsekvenser for repoet
