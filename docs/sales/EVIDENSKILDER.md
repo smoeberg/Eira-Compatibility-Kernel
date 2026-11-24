@@ -1,6 +1,6 @@
 # Evidenskildeoversigt
 
-**Status:** Udkast. Hører til [ADR-001](../decisions/ADR-001-office-centric-discovery.md) og må ikke læses uden denne.
+**Status:** Udkast. Hører til [ADR-001](../decisions/ADR-001-office-centric-discovery.md) og [ADR-002](../decisions/ADR-002-maalearkitektur.md) og må ikke læses uden disse.
 
 **Formål:** At besvare ét spørgsmål entydigt, både internt og i et tilbud: *Hvad skal der være adgang til, godkendt og installeret i kommunen, for at ECK kan levere en foranalyse?*
 
@@ -25,7 +25,7 @@ Kolonnen **Niveau** angiver evidensniveauet fra ADR-001. Niveauet er en egenskab
 | Graph, Purview, M365-brugsrapporter, Entra-apps | Centralt via API | App-registrering med læserettigheder og administratorsamtykke | E1 | Ja |
 | Skabeloner, Access, .xlsm | Mod kommunens filservere og SharePoint-biblioteker | At **kommunen selv** kører værktøjet. Eira installerer intet på servere (ECK-OCD-013) | E1 | Ja |
 | Office-automation på servere | En håndfuld ESDH- og konverteringsservere | Samme PowerShell, kørt af kommunens drift. Ingen installation | E1 (E4 ved efterfølgende test) | Ja |
-| Layouttest | Én maskine eller container | Word og LibreOffice headless på samme maskine | E4, E5 | Ja |
+| Layouttest | Kommunens egne maskiner, hvor fagsystemet kører | LibreOffice rendrer lokalt; facit er de PDF'er, fagsystemet allerede danner. Word afvikles hverken i container eller som serverautomatisering (ADR-002) | E4, E5 | Ja |
 | Kørselstest med Procmon | 1–2 testmaskiner | Administratorrettigheder under testen. Procmon er én exe, men indlæser en driver under kørsel | E4 | Ja |
 | Defender/KQL | Centralt i Defender-portalen | Defender for Endpoint P2/E5 for proceshændelser med kommandolinje og forældreproces. Se nedenfor | E2 | Nej, valgfri |
 | Windows-procesaudit (4688) med Event Forwarding | Alle klienter via GPO | En politikændring. Ingen ny software, men det påvirker alle klienter | E2 | Nej, valgfri |

@@ -1,7 +1,7 @@
 # ADR-002 – Målearkitektur for Office-automation
 
-**Status:** Foreslået.
-**Dato:** 24. november 2026.
+**Status:** Foreslået.\
+**Dato:** 24. november 2026.\
 **Forhold til ADR-001:** Supplerer afsnittene "Tekniske begrænsninger" og "Evidens" i [ADR-001](ADR-001-office-centric-discovery.md). Præciserer ECK-OCD-005 for laboratoriemiljøer (se "Fase A"). ADR-001 er gældende ved uoverensstemmelser, indtil denne ADR er accepteret.
 
 ## Beslutning
@@ -35,7 +35,7 @@ LibreOffice implementerer en delmængde af Words objektmodel i `sw/source/ui/vba
 | `Documents.Open`/`Add`, `Document.Close`/`Save` | Implementeret |
 | `Bookmarks`, `Range.Text`, `Variables`, `CustomDocumentProperties` | Implementeret |
 | `ContentControls`, `Fields`, `Tables`, `FormFields`, `Find`/`Replacement` | Implementeret |
-| `SaveAs` med `wdFormatPDF` | Ingen PDF-gren. Ukendte formater falder tilbage til "MS Word 97" uden fejl |
+| `SaveAs` med `wdFormatPDF` | Ingen PDF-gren. `setFilterPropsFromFormat()` har ikke noget `wdFormatPDF`-tilfælde, så `default` vælger filteret "MS Word 97", mens filen gemmes under det navn, fagsystemet angav. Et PDF-kald giver en Word-fil med `.pdf`-endelse, uden fejl |
 | `PrintOut` | Tom funktion (`//TODO`). Ingen virkning, ingen fejl |
 | `MailMerge.OpenDataSource` | Tom funktion. `Execute` findes ikke |
 | `SaveAs2`, `ExportAsFixedFormat` | Findes ikke |
@@ -51,7 +51,19 @@ Formål: få de første rigtige spor og fastlægge datamodellen, før der bruges
 
 - Kører kun på en isoleret Windows-VM, som Eira ejer, med et fagsystem i en testinstallation og syntetiske data.
 - Kører aldrig i en kommunes miljø, på en kommunes maskine eller med en kommunes data.
-- ECK-OCD-005 præciseres derfor: forbuddet mod hooking og injektion gælder alt, der køres i eller leveres til kommunens miljøer. Det gælder ikke Eiras isolerede laboratorium med syntetiske data. Denne præcisering kræver accept sammen med ADR-002.
+- ECK-OCD-005 præciseres derfor: forbuddet mod hooking og injektion gælder alt, der køres i eller leveres til kommunens miljøer. Det gælder ikke Eiras isolerede laboratorium med syntetiske data.
+- Fase A fastlægger **sporformatet**. Den kan ikke bruges som dækningsbevis: syntetiske data og ét testforløb viser, hvordan et spor ser ud, ikke hvilke kald kommunens sager udløser. Dækning kræver Fase B på et rigtigt fagsystem.
+- Fase A forudsætter, at et fagsystem er stillet til rådighed for laboratoriet med testlicens, en fast version og et aftalt sagsforløb. Det er den post i planen med længst leveringstid, og den er ikke teknisk.
+
+### Rækkefølgen for præciseringen
+
+ADR-002 kan ikke selv ophæve et bindende krav i ADR-001, og ADR-001 er gældende ved uoverensstemmelser, indtil ADR-002 er accepteret. Som dokumenterne står, kan Fase A derfor ikke køres lovligt, før ADR-002 er accepteret — og ADR-002 kan ikke accepteres, før Fase A har givet et spor. Kredsen skal brydes.
+
+Præciseringen vedtages derfor som en selvstændig rettelse af ECK-OCD-005 i ADR-001, med denne ordlyd:
+
+> **ECK-OCD-005** | Hooking, injection og trafikopfangning er ikke tilladt i kommunens miljøer. I Eiras isolerede laboratorium, med syntetiske data og uden forbindelse til kommunens miljøer, må det anvendes til at fastlægge datamodellen.
+
+Den rettelse kan vedtages med det samme og kræver ikke Fase A. Derefter accepteres ADR-002 på de øvrige kriterier.
 
 ### Fase B: COM-server pr. bruger
 
@@ -74,11 +86,15 @@ Formål: en indsamlingsmetode, som en kommune kan godkende.
 | Processer med administratorrettigheder | Nej. Elevated processer ignorerer COM-registrering pr. bruger | Skal afklares i spiken |
 | Tjenester og SYSTEM-konti, fx konverteringsservere | Nej | Serverinventar, procesoprettelse |
 | Interfaces uden typeinformation | Nej | Rapporteres som ikke målt |
-| Excels `Range` (kun dispinterface) | Via `IDispatch::Invoke`, ikke som genereret proxy | Skal verificeres i spiken |
+| Excels `Range` (kun dispinterface) | Ja ved sen binding via `IDispatch`, hvis typeinformationen findes ved kørsel. Ingen genereret proxy, så tidlig binding kan ikke betjenes | Verificeres i spiken |
+| 32/64-bit uoverensstemmelse mellem fagsystem og Office | Ja, men kun hvis serveren er bygget i klientens bitness. Er den ikke, indlæses den i en surrogate (`dllhost`), og ECK-MA-005 gælder ikke længere | Proxyerne skal bygges både x86 og x64. Afklares i spiken |
+| Word startet via OLE/DDE fra et andet program | Nej | Procesoprettelse, kørselstest |
 
 ### Objektidentitet
 
-Samme Word-objekt kan få flere proxyobjekter (fx ét fra en hændelse og ét fra en returværdi). Spor må derfor ikke bruges til at udlede, hvilke kald der hører til samme dokument, før dette er løst.
+Samme Word-objekt kan få flere proxyobjekter (fx ét fra en hændelse og ét fra en returværdi). Spor må derfor ikke bruges til at udlede, hvilke kald der hører til samme dokument, før dette er løst. TODO.txt nævner commit `4deff7ec`, som forsøger at løse det, men uden at være sikker.
+
+Identiteten kan ikke baseres på dokumentets sti. Stien er omfattet af ECK-OCD-003 og må ikke forlade maskinen. Sammenkædningen skal derfor ske lokalt med et tilfældigt id pr. dokument, og id'et må aldrig indgå i udtrækket.
 
 ## Tre tilstande
 
@@ -91,6 +107,20 @@ Samme Word-objekt kan få flere proxyobjekter (fx ét fra en hændelse og ét fr
 - Tilstanden er et selvstændigt felt. Fjernelse af små tal rammer kun antallet, aldrig tilstanden.
 - `målt_intet_kaldt` gælder kun de testede forløb og skal altid stå sammen med en beskrivelse af forløbene.
 - `ikke_målt` bliver aldrig automatisk til `gap` eller til fravær af afhængighed (ADR-001: fravær af observation er ikke dokumentation for fravær).
+- I kode og i sporformatet hedder værdierne `called`, `measured_none` og `not_measured` (se "Konsekvenser for repoet"). De danske navne bruges kun i dokumentationen.
+
+### Tilstand og evidensniveau
+
+Tilstanden siger, om der blev målt. Evidensniveauet siger, hvor stærkt et fund er. De to må ikke blandes sammen, og et spor fra COM-målingen er ikke E3.
+
+| Fund | Niveau |
+|---|---|
+| `called`, kaldende proces identificeret, gentaget i to gennemløb | E4 |
+| `called`, kaldende proces identificeret, ét gennemløb | E2 |
+| `measured_none` | Intet niveau. Det er ikke et fund; dækningen angives i stedet |
+| `not_measured` | Intet niveau. Rapporteres som ukendt (ECK-OCD-010) |
+
+E3 er forbeholdt tilføjelsens observation inde i Office. COM-målingen ser kaldet ved procesgrænsen: den ved, hvem der kaldte, men ikke hvad der skete bagefter. Den kan derfor aldrig løftes til E3, og det skal stå i rapporten ved siden af niveauet (ECK-OCD-009).
 
 ## Bro
 
@@ -129,7 +159,7 @@ Huller i VBA-laget løses som rettelser i LibreOffice (`sw/source/ui/vba`, `sc/s
 |---|---|
 | ECK-MA-001 | Kode med injektion eller IAT-patching køres kun i Eiras isolerede laboratorium med syntetiske data. |
 | ECK-MA-002 | Hvert fund har en af de tre tilstande. Tilstanden fjernes aldrig ved dataminimering. |
-| ECK-MA-003 | Et spor angiver fagsystemets version, Office-version, testkonto-type og de testede forløb. |
+| ECK-MA-003 | Et spor angiver fagsystemets version og bitness, Office-version og build, testkonto-type, om den kaldende proces var elevated, og de testede forløb. |
 | ECK-MA-004 | Måleserver og bro registreres aldrig samtidig i samme profil. |
 | ECK-MA-005 | Sikkerhedsbeskrivelsen siger eksplicit, at målekoden indlæses i fagsystemets proces. |
 | ECK-MA-006 | Matrixstatus `verificeret` kræver et bestået probe-resultat. Kildekode alene giver højst `ikke_verificeret`. |
@@ -142,7 +172,9 @@ Huller i VBA-laget løses som rettelser i LibreOffice (`sw/source/ui/vba`, `sc/s
 - [ ] Hvordan startes den rigtige Word pålideligt, når CLSID'et er overtaget, også på terminalservere?
 - [ ] Hvordan håndteres fagsystemer, der kører med administratorrettigheder?
 - [ ] Kan sen binding spore interfaces uden genererede proxyer, som TODO.txt antyder? Hvis ja, gælder begrænsningen kun VB6.
-- [ ] Hvordan løses objektidentitet i sporet?
+- [ ] Hvordan løses objektidentitet i sporet, og er `4deff7ec` tilstrækkeligt?
+- [ ] Kan proxyerne bygges i både x86 og x64, og hvad sker der, når fagsystem og Office har forskellig bitness?
+- [ ] Hvem stiller et fagsystem til rådighed for laboratoriet, og på hvilken aftale? Testlicens, version og et repræsentativt sagsforløb er en forudsætning for Fase A.
 - [ ] Skal procesoprettelse komme fra KQL, 4688 eller begge?
 - [ ] Hvornår er en måling færdig? Forslag: alle forløb i en aftalt liste er kørt, og to gennemløb giver samme sæt kald.
 - [ ] Hvem ejer og finansierer vidensbasen og matrixen løbende?
@@ -153,11 +185,13 @@ ADR-002 kan accepteres, når:
 
 - [ ] Fase A har givet et rigtigt spor fra mindst ét fagsystem i laboratoriet.
 - [ ] Spiken for fase B har vist, om tidlig og sen binding kan måles uden injektion, eller beskrevet alternativet.
-- [ ] Sporformatet er fastlagt, inklusive de tre tilstande.
-- [ ] ADR-001 er accepteret med præciseringen af ECK-OCD-005.
+- [ ] Sporformatet er fastlagt, inklusive de tre tilstande og koblingen til evidensniveauerne.
+- [ ] ECK-OCD-005 er rettet i ADR-001 med ordlyden under "Rækkefølgen for præciseringen". Dette kriterium kan opfyldes før Fase A og skal ikke vente på denne ADR.
 
 ## Konsekvenser for repoet
 
 - `packages/fingerprint/src/score.ts`: `checkSupport` returnerer `"gap"`, når ingen rute matcher. Det skal ændres til `ikke_målt`/`ukendt`, før ingest tildeler evidensniveauer. `calculateCompatibilityScore` og den grønne, gule og røde anbefaling udgår, jf. ADR-001.
 - Nye pakker: måling (Windows, C++, fork med MPL-noter bevaret, uden navnet COLEAT), inventar (PowerShell), skabelonscanner, probe-matrix og layouttest.
-- `docs/sales/EVIDENSKILDER.md` opdateres med de tre tilstande, de blinde vinkler og PDF-facit.
+- `packages/fingerprint/src/score.ts`: tilstandsværdierne skal være `called`, `measured_none` og `not_measured`, så de ikke blandes sammen med de danske dokumentationsnavne i JSON-udtræk og API-svar.
+- `SaveAs` med `wdFormatPDF` er den mest konsekvensrige afvigelse og skal være den første probe. Kaldet giver en Word-fil med `.pdf`-endelse, uden fejl, fordi `setFilterPropsFromFormat()` falder tilbage til filteret "MS Word 97". I dansk offentligt regi er PDF ofte et leverancekrav, så afvigelsen skal stå i salgsmaterialet som en kendt blokering med en foreslået løsning — konvertering efter lagring — og ikke kun som en række i matrixen.
+- `docs/sales/EVIDENSKILDER.md` opdateres med de tre tilstande, de blinde vinkler og PDF-facit. Rækken for layouttest er rettet, så den ikke længere nævner Word i container.
