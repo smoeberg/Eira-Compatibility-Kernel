@@ -50,5 +50,3 @@ export class TenantAdminController {
     return this.tenants.findById(tenantId);
   }
 }
-
-export class RunAdminController {}

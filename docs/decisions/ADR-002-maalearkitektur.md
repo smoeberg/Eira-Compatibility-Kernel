@@ -213,8 +213,8 @@ ADR-002 kan accepteres, når:
 
 ## Konsekvenser for repoet
 
-- `packages/fingerprint/src/score.ts`: `checkSupport` returnerer `"gap"`, når ingen rute matcher. Det skal ændres til `ikke_målt`/`ukendt`, før ingest tildeler evidensniveauer. `calculateCompatibilityScore` og den grønne, gule og røde anbefaling udgår, jf. ADR-001.
+- `packages/fingerprint` med `checkSupport` (der returnerede `"gap"` som standard) og procentscoren er fjernet sammen med proxysporet. Den nye ingest må aldrig gøre et ukendt fund til `gap`.
 - Nye pakker: måling (Windows, C++, fork med MPL-noter bevaret, uden navnet COLEAT), inventar (PowerShell), skabelonscanner, probe-matrix og layouttest.
-- `packages/fingerprint/src/score.ts`: tilstandsværdierne skal være `called`, `measured_none` og `not_measured`, så de ikke blandes sammen med de danske dokumentationsnavne i JSON-udtræk og API-svar.
+- I ingest og sporformat er tilstandsværdierne `called`, `measured_none` og `not_measured`, så de ikke blandes sammen med de danske dokumentationsnavne i JSON-udtræk og API-svar.
 - `SaveAs` med `wdFormatPDF` er den mest konsekvensrige afvigelse og skal være den første probe. Kaldet giver en Word-fil med `.pdf`-endelse, uden fejl, fordi `setFilterPropsFromFormat()` falder tilbage til filteret "MS Word 97". I dansk offentligt regi er PDF ofte et leverancekrav, så afvigelsen skal stå i salgsmaterialet som en kendt blokering med en foreslået løsning — konvertering efter lagring — og ikke kun som en række i matrixen.
 - `docs/sales/EVIDENSKILDER.md` opdateres med de tre tilstande, de blinde vinkler og PDF-facit. Rækken for layouttest er rettet, så den ikke længere nævner Word i container.

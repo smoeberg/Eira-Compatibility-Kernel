@@ -61,7 +61,7 @@ Per-service token overrider platform token for den identitet.
 import { buildServiceAuthHeaders } from "@eck/service-auth";
 
 const headers = buildServiceAuthHeaders("scheduler");
-await fetch(`${API_URL}/internal/fingerprint/runs/${id}/complete`, {
+await fetch(`${API_URL}/internal/reports/${id}`, {
   method: "POST",
   headers,
 });

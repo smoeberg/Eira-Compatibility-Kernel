@@ -4,7 +4,6 @@ import { fetchAuthMe, getAdminKey, usesSessionAuth } from "./api/client";
 import { DashboardPage } from "./pages/DashboardPage";
 import { LoginPage } from "./pages/LoginPage";
 import { NewTenantPage } from "./pages/NewTenantPage";
-import { RunDetailPage } from "./pages/RunDetailPage";
 import { TenantDetailPage } from "./pages/TenantDetailPage";
 import { Layout } from "./Layout";
 
@@ -48,7 +47,6 @@ export function App() {
         <Route path="/" element={<DashboardPage />} />
         <Route path="/tenants/new" element={<NewTenantPage />} />
         <Route path="/tenants/:id" element={<TenantDetailPage />} />
-        <Route path="/runs/:runId" element={<RunDetailPage />} />
       </Route>
     </Routes>
   );

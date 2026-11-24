@@ -10,7 +10,6 @@
 |------|-------|-----------|
 | **Portal** | `eck.eira-systems.eu` | Ja — browser |
 | **Data API** | `api.eck.eira-systems.eu` | **Nej** — kun S2S |
-| **Fingerprint** | `*.fp.eira-systems.eu` | Ja — fagsystem |
 
 ---
 
@@ -51,7 +50,6 @@
 
 - `/health` (kan begrænses til intern)
 - `/internal/*` (S2S)
-- Fingerprint middleware på `*.fp`
 
 Admin `/api/v1/*` accepteres kun med `X-ECK-Service-Id: bff`.
 

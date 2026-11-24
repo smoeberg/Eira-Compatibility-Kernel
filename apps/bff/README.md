@@ -1,6 +1,6 @@
 # ECK — NestJS BFF (anbefalet portal-gateway)
 
-**Erstatter:** PHP BFF på Simply (`integrations/simply/proxy/` — deprecated).
+**Rolle:** Portal-gateway mellem browser og API (OIDC-session, signerede brugerheaders).
 
 ---
 
@@ -62,7 +62,7 @@ Admin `.env`: `VITE_ECK_AUTH_MODE=proxy`
 
 ## Deploy (Hetzner)
 
-Se [infra/DEPLOY_BFF.md](../../infra/DEPLOY_BFF.md) og [WEBSITE_CMS_INTEGRATION_v0.5.md](../../docs/WEBSITE_CMS_INTEGRATION_v0.5.md).
+Se [infra/DEPLOY_BFF.md](../../infra/DEPLOY_BFF.md).
 
 ---
 

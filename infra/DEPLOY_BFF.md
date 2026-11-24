@@ -1,8 +1,6 @@
 # ECK — Deploy NestJS BFF (portal zone)
 
-**Erstatter:** PHP BFF på Simply — se [integrations/simply/proxy/DEPRECATED.md](../integrations/simply/proxy/DEPRECATED.md)
-
-Relateret: [WEBSITE_CMS_INTEGRATION_v0.5.md](../docs/WEBSITE_CMS_INTEGRATION_v0.5.md), [DEPLOY_HETZNER.md](DEPLOY_HETZNER.md)
+Relateret: [DEPLOY_HETZNER.md](DEPLOY_HETZNER.md)
 
 ---
 
@@ -13,7 +11,6 @@ Relateret: [WEBSITE_CMS_INTEGRATION_v0.5.md](../docs/WEBSITE_CMS_INTEGRATION_v0.
 | `eck.eira-systems.eu` | Caddy → BFF + admin static | 443 |
 | `eck…/api/*`, `/auth/*` | `@eck/bff` | 3001 |
 | `api.eck.eira-systems.eu` | `@eck/api` | 3000 |
-| `*.fp.eira-systems.eu` | `@eck/api` | 3000 |
 
 ---
 
@@ -95,4 +92,4 @@ pnpm dev:admin   # :5173 — proxy /api + /auth → BFF
 
 ## Rollback
 
-Hvis BFF fejler før DNS-skift: Simply PHP BFF kan genaktiveres midlertidigt (deprecated).
+Hvis BFF fejler efter en opdatering: rul tilbage til forrige image-tag.

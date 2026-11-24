@@ -17,7 +17,6 @@ services:
       ECK_API_BFF_ONLY: ${ECK_API_BFF_ONLY:-true}
       ECK_REQUIRE_USER_CONTEXT: ${ECK_REQUIRE_USER_CONTEXT:-true}
       ECK_REQUIRE_BFF_SIGNATURE: ${ECK_REQUIRE_BFF_SIGNATURE:-true}
-      ECK_FP_DOMAIN: ${ECK_FP_DOMAIN:-fp.eira-systems.eu}
       ECK_PUBLIC_PROTOCOL: https
       ECK_PUBLIC_DOMAIN: ${ECK_PUBLIC_DOMAIN:-eira-systems.eu}
       ECK_ADMIN_HOST: ${ECK_ADMIN_HOST:-eck.eira-systems.eu}

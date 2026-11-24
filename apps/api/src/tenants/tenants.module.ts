@@ -4,15 +4,13 @@ import { AdminAuthGuard } from "../auth/admin-auth.guard";
 import { BffSignatureGuard } from "../auth/bff-signature.guard";
 import { ServiceIdentityGuard } from "../auth/service-identity.guard";
 import { UserContextGuard } from "../auth/user-context.guard";
-import { FingerprintModule } from "../fingerprint/fingerprint.module";
-import { RunAdminController, TenantAdminController } from "./tenant-admin.controller";
-import { SetupService } from "./setup.service";
+import { TenantAdminController } from "./tenant-admin.controller";
 import { TenantService } from "./tenant.service";
 
 @Module({
-  imports: [FingerprintModule, AuditModule],
+  imports: [AuditModule],
   controllers: [TenantAdminController],
-  providers: [TenantService, SetupService, AdminAuthGuard, BffSignatureGuard, ServiceIdentityGuard, UserContextGuard],
-  exports: [TenantService, SetupService],
+  providers: [TenantService, AdminAuthGuard, BffSignatureGuard, ServiceIdentityGuard, UserContextGuard],
+  exports: [TenantService],
 })
 export class TenantsModule {}

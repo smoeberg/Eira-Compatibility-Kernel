@@ -7,14 +7,13 @@
     "dev": "nest start --watch",
     "start": "node dist/main.js",
     "test": "vitest run",
-    "prebuild": "pnpm --filter @eck/observability build && pnpm --filter @eck/bff-core build && pnpm --filter @eck/service-auth build && pnpm --filter @eck/fingerprint build",
-    "predev": "pnpm --filter @eck/observability build && pnpm --filter @eck/bff-core build && pnpm --filter @eck/service-auth build && pnpm --filter @eck/fingerprint build",
+    "prebuild": "pnpm --filter @eck/observability build && pnpm --filter @eck/bff-core build && pnpm --filter @eck/service-auth build",
+    "predev": "pnpm --filter @eck/observability build && pnpm --filter @eck/bff-core build && pnpm --filter @eck/service-auth build",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate"
   },
   "dependencies": {
     "@eck/bff-core": "workspace:*",
-    "@eck/fingerprint": "workspace:*",
     "@eck/observability": "workspace:*",
     "@eck/service-auth": "workspace:*",
     "@nestjs/common": "^11.0.10",

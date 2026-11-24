@@ -7,7 +7,3 @@ eck.eira-systems.eu {
 api.eck.eira-systems.eu {
 	reverse_proxy api:3000
 }
-
-*.fp.eira-systems.eu {
-	reverse_proxy api:3000
-}

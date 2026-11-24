@@ -2,13 +2,13 @@
 
 **Status:** v1 service token ✅ · v2 OIDC ✅ · **v0.5 NestJS BFF anbefalet** (PHP deprecated)  
 **Dato:** 2. juli 2026  
-**Relateret:** [apps/bff/README.md](../../apps/bff/README.md), [WEBSITE_CMS_INTEGRATION_v0.5.md](../WEBSITE_CMS_INTEGRATION_v0.5.md)
+**Relateret:** [apps/bff/README.md](../../apps/bff/README.md)
 
 ---
 
 ## Krav
 
-BFF på Simply skal **aldrig**:
+BFF skal **aldrig**:
 
 - Gemme eller validere brugernavn/adgangskode direkte (undgå Basic Auth som endeløsning)
 - Eksponere `ADMIN_API_KEY` eller `SERVICE_TOKEN` til browser
@@ -133,7 +133,6 @@ ECK_OIDC_AUDIENCE=           # API app registration
 |---|----------|----------|
 | Kommune-IT | Naturligt (allerede Entra) | Self-hosted alternativ |
 | B2G | ✅ Anbefalet | Hvis kunde kræver on-prem IdP |
-| Spec | [ECK_Admin_Console](ECK_Admin_Console_v0.1.md) nævner Entra OIDC | EU-hosting muligt |
 
 ---
 

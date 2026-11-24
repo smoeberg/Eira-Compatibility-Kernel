@@ -2,7 +2,7 @@
 
 **Status:** Foreslået.
 **Dato:** 8. november 2026.
-**Afløser:** Forslagene i PR #3, som lukkes uden merge. Når denne ADR er accepteret, afløser den også beslutningen om en Eira-hostet proxy i `docs/architecture/FINGERPRINT_DATA_FLOW.md`.
+**Afløser:** Forslagene i PR #3, som lukkes uden merge. Når denne ADR er accepteret, afløser den også beslutningen om en Eira-hostet proxy i `docs/architecture/FINGERPRINT_DATA_FLOW.md` (dokumentet og proxykoden er fjernet fra repoet og findes i git-historikken).
 
 ## Beslutning
 
@@ -161,12 +161,10 @@ ADR'en kan accepteres, når:
 | --- | --- |
 | Tenants, medlemskaber, audit, BFF og service-auth | Kan genbruges |
 | Kapabilitetsmatrix | Idéen genbruges. Indholdet skal handle om Office og LibreOffice |
-| `score.ts` | Bruges ikke til primær visning |
-| `checkSupport` | Skal kunne skelne mellem ukendt og gap |
-| `apps/api/src/proxy` og `onboarding` | Bruges ikke i denne retning. Fjernes først efter accept |
+| `score.ts`, `checkSupport`, `apps/api/src/proxy`, `onboarding`, oversættelseslag og adaptere | Fjernet 24. november 2026 efter beslutning fra projektejeren, før accept af denne ADR. Findes i git-historikken |
 | Office-tilføjelse, inventar, proceskorrelation og webside til sammentælling | Nye komponenter |
 
-Ingen kode ændres, før denne ADR er accepteret.
+Proxysporet er fjernet (se tabellen). Nye komponenter bygges først, når denne ADR er accepteret.
 
 ## Fravalgte alternativer
 

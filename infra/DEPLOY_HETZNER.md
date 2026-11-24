@@ -1,6 +1,6 @@
 # ECK — Deploy Hetzner (portal + data zone)
 
-Se: [DEPLOY_BFF.md](DEPLOY_BFF.md), [WEBSITE_CMS_INTEGRATION_v0.5.md](../docs/WEBSITE_CMS_INTEGRATION_v0.5.md)
+Se: [DEPLOY_BFF.md](DEPLOY_BFF.md)
 
 ---
 
@@ -12,7 +12,6 @@ Se: [DEPLOY_BFF.md](DEPLOY_BFF.md), [WEBSITE_CMS_INTEGRATION_v0.5.md](../docs/WE
 | React admin | `eck.eira-systems.eu` `/` | Ja |
 | NestJS API | `api.eck.eira-systems.eu` | **Nej** — kun BFF + drift |
 | PostgreSQL | Intern | Nej |
-| Fingerprint proxy | `*.fp.eira-systems.eu` | Ja |
 
 ---
 
@@ -22,7 +21,6 @@ Se: [DEPLOY_BFF.md](DEPLOY_BFF.md), [WEBSITE_CMS_INTEGRATION_v0.5.md](../docs/WE
 |------|---------|
 | `eck.eira-systems.eu` | Caddy → BFF + admin static |
 | `api.eck.eira-systems.eu` | NestJS API `:3000` |
-| `*.fp.eira-systems.eu` | NestJS proxy |
 
 ---
 
@@ -30,9 +28,8 @@ Se: [DEPLOY_BFF.md](DEPLOY_BFF.md), [WEBSITE_CMS_INTEGRATION_v0.5.md](../docs/WE
 
 ```env
 DATABASE_URL=postgresql://...
-ADMIN_API_KEY=          # deles KUN med Simply proxy — ikke browser
+ADMIN_API_KEY=          # kun dev — prod bruger BFF service token
 INTERNAL_API_KEY=
-ECK_FP_DOMAIN=fp.eira-systems.eu
 ECK_PUBLIC_DOMAIN=eira-systems.eu
 ECK_PUBLIC_PROTOCOL=https
 ECK_ADMIN_HOST=eck.eira-systems.eu
