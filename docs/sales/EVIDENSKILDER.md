@@ -22,9 +22,9 @@ Kolonnen **Niveau** angiver evidensniveauet fra ADR-001. Niveauet er en egenskab
 | --- | --- | --- | --- | --- |
 | Office-tilføjelse i Word og Excel | På de observerede klienter | Central udrulning, tidsbegrænsning, netværksmappe til småfiler. Ingen ændring af fagsystemer (ECK-OCD-001) | E3 | Ja, efter teknisk spike |
 | Inventarscanning (PowerShell) | På klienterne via den eksisterende Intune-agent | Intune. Intet installeres | E1 | Ja |
-| Graph, Purview, M365-brugsrapporter, Entra-apps | Centralt via API | App-registrering med læserettigheder og administratorsamtykke | E0, E1 | Ja |
+| Graph, Purview, M365-brugsrapporter, Entra-apps | Centralt via API | App-registrering med læserettigheder og administratorsamtykke | E1 | Ja |
 | Skabeloner, Access, .xlsm | Mod kommunens filservere og SharePoint-biblioteker | At **kommunen selv** kører værktøjet. Eira installerer intet på servere (ECK-OCD-013) | E1 | Ja |
-| Office-automation på servere | En håndfuld ESDH- og konverteringsservere | Samme PowerShell, kørt af kommunens drift. Ingen installation | E1, E4 | Ja |
+| Office-automation på servere | En håndfuld ESDH- og konverteringsservere | Samme PowerShell, kørt af kommunens drift. Ingen installation | E1 (E4 ved efterfølgende test) | Ja |
 | Layouttest | Én maskine eller container | Word og LibreOffice headless på samme maskine | E4, E5 | Ja |
 | Kørselstest med Procmon | 1–2 testmaskiner | Administratorrettigheder under testen. Procmon er én exe, men indlæser en driver under kørsel | E4 | Ja |
 | Defender/KQL | Centralt i Defender-portalen | Defender for Endpoint P2/E5 for proceshændelser med kommandolinje og forældreproces. Se nedenfor | E2 | Nej, valgfri |
@@ -47,7 +47,7 @@ Det er værdifuldt, fordi ADR-001's acceptkriterium *"Metoden til lokal procesko
 
 Kilden er valgfri og må ikke være en forudsætning for første leverance. Tre betingelser gælder, hvis den anvendes:
 
-- **Licens.** Fuld Advanced Hunting med `DeviceProcessEvents`, kommandolinje og 30 dages historik kræver MDE P2 eller E5. Defender for Business giver en begrænset visning, og API-adgangen er yderligere begrænset. I tilbuddet skal der spørges ind til licensen fremfor at antage den.
+- **Licens.** Advanced Hunting (`DeviceProcessEvents` med kommandolinje og forældreproces) kræver Defender for Endpoint P2, typisk via Microsoft 365 E5 eller E5 Security. Microsoft 365 E3 indeholder P1, som ikke har Advanced Hunting. Defender for Business (Business Premium) har heller ikke Advanced Hunting og er begrænset til 300 brugere, så det er sjældent relevant for kommuner. I tilbuddet skal der spørges ind til licensen frem for at antage den.
 - **Afleveringsvej.** KQL-resultatet eksporteres som fil og gennemgår samme sammentælling i browseren og samme manuelle godkendelse som alt andet (ECK-OCD-008, ECK-OCD-014). Der må ikke oprettes en separat datakanal til Eira.
 - **Niveau.** En observeret proceslinje er stadig E2 i ADR-001's skala, fordi den ikke viser, hvad der sker inde i Office. Rapporten skal derfor altid angive kilden ved siden af niveauet, så E2 fra KQL ikke læses som E2 fra en lokal sandsynliggørelse.
 
@@ -55,19 +55,22 @@ Uden Defender er 4688 med kommandolinje den samme type data, men indsamlet lokal
 
 ## Stikprøve og dækning
 
-Implementeringen og testkørslen skal kun køre på et udsnit. Inventarscriptet skal ikke: et script, der sendes ud via Intune, koster det samme i ressourcer på alle maskiner som på 30.
+Tilføjelsen og kørselstesten skal kun køre på et udsnit. Inventarscriptet skal ikke: et script, der sendes ud via Intune, koster det samme i ressourcer på alle maskiner som på 30.
 
 **Fast antal frem for procentsats:** mindst 25–30 maskiner pr. forvaltning, alle maskiner hvor et kendt fagsystem er installeret, og ingen stikprøver på ESDH- og konverteringsservere.
 
-Sandsynligheden for at finde en afhængighed, der findes på andelen *p* af maskinerne, når man undersøger *n* maskiner ud af *N*, er hypergeometrisk. Ved *N* = 50:
+Sandsynligheden for at finde en afhængighed, der findes på *K* af *N* maskiner, når man undersøger *n* tilfældigt valgte, er hypergeometrisk: 1 − C(N−K, n) / C(N, n). Ved *N* = 50:
 
-| Udbredelse | n = 25 | n = 30 |
+| Afhængigheden findes på | n = 25 | n = 30 |
 | --- | --- | --- |
-| 10 % | 93 % | 96 % |
-| 5 % | 72 % | 79 % |
-| 2 maskiner ud af 50 | 76 % | 85 % |
+| 1 maskine | 50 % | 60 % |
+| 2 maskiner | 76 % | 85 % |
+| 3 maskiner | 88 % | 94 % |
+| 5 maskiner (10 %) | 97 % | 99 % |
 
-Rapporten skal skrive det direkte: *"Afhængigheder på under ca. 10 % af maskinerne i en forvaltning kan være overset."*
+Det svage punkt er altså ikke 10 %-afhængigheder, men dem, der kun sidder på en eller to maskiner. Ved store forvaltninger (*N* ≫ *n*) nærmer tallene sig 1 − (1 − p)ⁿ.
+
+Rapporten skal skrive grænsen ud for hver forvaltning, beregnet ud fra det faktiske *N* og *n*, fx: *"Afhængigheder på 1–2 af forvaltningens 50 maskiner er fundet med 50–76 % sandsynlighed og kan være overset."* Beregningen hører hjemme i sammentællingen i browseren, så den altid bruger de rigtige tal.
 
 Det er grundreglen — at fravær af observation ikke er dokumentation for fravær af en afhængighed — gjort målbar. Uden den sætning er dækningsaksen i ADR-001 blot en formalitet.
 
@@ -81,7 +84,6 @@ Alle kilder i tabellen ovenfor skal indgå i denne vej. Ingen kilde må have sin
 
 Må bruges:
 
-- "Ingen installation på nogen af enhederne."
 - "En tidsbegrænset Office-tilføjelse, der udrulles og afinstalleres centralt på de maskiner, der observeres."
 - "Inventar, skabeloner og Graph-data indsamles uden installation."
 - "Kræver en app-registrering med administratorgodkendelse."
