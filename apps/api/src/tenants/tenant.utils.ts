@@ -16,15 +16,3 @@ export function assertValidSlug(slug: string): void {
     );
   }
 }
-
-export function assertValidLegacyUrl(url: string): void {
-  let parsed: URL;
-  try {
-    parsed = new URL(url);
-  } catch {
-    throw new Error("legacyBaseUrl must be a valid URL");
-  }
-  if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
-    throw new Error("legacyBaseUrl must use http or https");
-  }
-}

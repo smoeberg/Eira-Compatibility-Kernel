@@ -18,11 +18,11 @@ export function DashboardPage() {
     <div className="page">
       <header className="row">
         <div>
-          <h1>Fingerprint — oversigt</h1>
-          <p className="muted">Hosted på Eira · ingen kommunal DNS</p>
+          <h1>Office-foranalyse — kommuner</h1>
+          <p className="muted">Kun godkendte rapportfiler modtages (ADR-001)</p>
         </div>
         <Link className="button" to="/tenants/new">
-          + Ny tenant
+          + Ny kommune
         </Link>
       </header>
 
@@ -32,12 +32,11 @@ export function DashboardPage() {
         {tenants.map((t) => (
           <Link key={t.id} to={`/tenants/${t.id}`} className="card tenant-card">
             <strong>{t.name}</strong>
-            <span className="mono">{t.proxyUrl}</span>
-            <span className="muted">{t.legacyBaseUrl}</span>
+            <span className="mono">{t.slug}</span>
           </Link>
         ))}
         {tenants.length === 0 && !error && (
-          <p className="muted">Ingen tenants endnu — opret den første.</p>
+          <p className="muted">Ingen kommuner endnu — opret den første.</p>
         )}
       </div>
     </div>

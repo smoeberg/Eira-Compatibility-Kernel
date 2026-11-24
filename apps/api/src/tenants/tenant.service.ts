@@ -6,14 +6,13 @@ import {
   ServiceUnavailableException,
 } from "@nestjs/common";
 import { eq } from "drizzle-orm";
-import { buildProxyUrl } from "../config/eck.config";
 import { getDb, schema } from "../db";
 import type {
   CreateTenantDto,
   TenantResponse,
   UpdateTenantDto,
 } from "./tenant.dto";
-import { assertValidLegacyUrl, assertValidSlug, normalizeSlug } from "./tenant.utils";
+import { assertValidSlug, normalizeSlug } from "./tenant.utils";
 
 @Injectable()
 export class TenantService {
@@ -30,9 +29,7 @@ export class TenantService {
       id: row.id,
       slug: row.slug,
       name: row.name,
-      legacyBaseUrl: row.legacyBaseUrl,
       contactEmail: row.contactEmail ?? null,
-      proxyUrl: buildProxyUrl(row.slug),
       createdAt: row.createdAt?.toISOString() ?? new Date().toISOString(),
     };
   }
@@ -42,7 +39,6 @@ export class TenantService {
     const slug = normalizeSlug(dto.slug);
     try {
       assertValidSlug(slug);
-      assertValidLegacyUrl(dto.legacyBaseUrl);
     } catch (err) {
       throw new BadRequestException((err as Error).message);
     }
@@ -53,7 +49,6 @@ export class TenantService {
         .values({
           slug,
           name: dto.name.trim(),
-          legacyBaseUrl: dto.legacyBaseUrl.trim().replace(/\/$/, ""),
           contactEmail: dto.contactEmail?.trim() ?? null,
         })
         .returning();
@@ -97,19 +92,10 @@ export class TenantService {
 
   async update(id: string, dto: UpdateTenantDto): Promise<TenantResponse> {
     const db = this.requireDb();
-    if (dto.legacyBaseUrl) {
-      try {
-        assertValidLegacyUrl(dto.legacyBaseUrl);
-      } catch (err) {
-        throw new BadRequestException((err as Error).message);
-      }
-    }
-
     const [row] = await db
       .update(schema.tenants)
       .set({
         name: dto.name?.trim(),
-        legacyBaseUrl: dto.legacyBaseUrl?.trim().replace(/\/$/, ""),
         contactEmail: dto.contactEmail?.trim(),
       })
       .where(eq(schema.tenants.id, id))

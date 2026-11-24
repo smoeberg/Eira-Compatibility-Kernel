@@ -13,7 +13,3 @@ eck.localhost {
 api.eck.localhost {
 	reverse_proxy api:3000
 }
-
-*.fp.localhost {
-	reverse_proxy api:3000
-}

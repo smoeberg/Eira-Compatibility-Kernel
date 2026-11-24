@@ -27,7 +27,6 @@ services:
       ECK_SERVICE_TOKEN: ${ECK_SERVICE_TOKEN:-dev-service-token}
       ECK_BFF_SIGNING_SECRET: ${ECK_BFF_SIGNING_SECRET:-dev-signing-secret}
       ECK_API_BFF_ONLY: ${ECK_API_BFF_ONLY:-false}
-      ECK_FP_DOMAIN: ${ECK_FP_DOMAIN:-fp.localhost}
       ECK_PUBLIC_PROTOCOL: http
     ports:
       - "3000:3000"

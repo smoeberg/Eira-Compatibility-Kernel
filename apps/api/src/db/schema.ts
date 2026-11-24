@@ -1,7 +1,5 @@
 import {
-  integer,
   jsonb,
-  numeric,
   pgTable,
   text,
   timestamp,
@@ -13,51 +11,8 @@ export const tenants = pgTable("tenants", {
   id: uuid("id").primaryKey().defaultRandom(),
   slug: varchar("slug", { length: 63 }).notNull().unique(),
   name: text("name").notNull(),
-  legacyBaseUrl: text("legacy_base_url").notNull(),
   contactEmail: varchar("contact_email", { length: 255 }),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
-});
-
-export const fingerprintRuns = pgTable("fingerprint_runs", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  tenantId: uuid("tenant_id")
-    .notNull()
-    .references(() => tenants.id),
-  startedAt: timestamp("started_at", { withTimezone: true }).notNull(),
-  endsAt: timestamp("ends_at", { withTimezone: true }).notNull(),
-  status: varchar("status", { length: 20 }).notNull().default("running"),
-  mirrorPercent: integer("mirror_percent").notNull().default(100),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
-});
-
-export const fingerprintLog = pgTable("fingerprint_log", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  tenantId: uuid("tenant_id").notNull(),
-  runId: uuid("run_id").references(() => fingerprintRuns.id),
-  integrationId: uuid("integration_id"),
-  method: varchar("method", { length: 10 }),
-  path: text("path"),
-  pathRaw: text("path_raw"),
-  requestHeaders: jsonb("req_headers"),
-  responseStatus: integer("res_status"),
-  latencyMs: integer("latency_ms"),
-  payloadHash: varchar("payload_hash", { length: 64 }),
-  category: varchar("category", { length: 32 }),
-  capturedAt: timestamp("captured_at", { withTimezone: true }).defaultNow(),
-});
-
-export const compatibilityReports = pgTable("compatibility_reports", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  runId: uuid("run_id")
-    .notNull()
-    .unique()
-    .references(() => fingerprintRuns.id),
-  tenantId: uuid("tenant_id").notNull(),
-  totalScore: numeric("total_score", { precision: 5, scale: 2 }),
-  scoresByCategory: jsonb("scores_by_category"),
-  levels: jsonb("levels"),
-  recommendation: varchar("recommendation", { length: 10 }),
-  generatedAt: timestamp("generated_at", { withTimezone: true }).defaultNow(),
 });
 
 export const auditLog = pgTable("audit_log", {
@@ -73,25 +28,6 @@ export const auditLog = pgTable("audit_log", {
   path: text("path"),
   metadata: jsonb("metadata"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
-});
-
-export const integrationSetups = pgTable("integration_setups", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  tenantId: uuid("tenant_id").notNull().references(() => tenants.id),
-  proxyHost: varchar("proxy_host", { length: 255 }).notNull().unique(),
-  state: jsonb("state").notNull(),
-  version: integer("version").notNull().default(0),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-});
-
-export const integrationSetupEvents = pgTable("integration_setup_events", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  integrationId: uuid("integration_id").notNull().references(() => integrationSetups.id),
-  event: varchar("event", { length: 64 }).notNull(),
-  actor: varchar("actor", { length: 128 }).notNull(),
-  fromStatus: varchar("from_status", { length: 32 }).notNull(),
-  toStatus: varchar("to_status", { length: 32 }).notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 export const tenantMemberships = pgTable("tenant_memberships", {

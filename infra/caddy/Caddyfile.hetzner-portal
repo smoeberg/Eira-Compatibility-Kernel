@@ -29,8 +29,3 @@ eck.eira-systems.eu {
 api.eck.eira-systems.eu {
 	reverse_proxy api:3000
 }
-
-# Fingerprint passthrough — public (fagsystem traffic)
-*.fp.eira-systems.eu {
-	reverse_proxy api:3000
-}
